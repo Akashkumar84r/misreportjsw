@@ -377,3 +377,37 @@ input, textarea, select {
 .rep-sect li span { color: var(--text-muted); }
 .status-synced { display: inline-block; background: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 8px; }
 .empty-log { color: #94a3b8; font-style: italic; font-size: 0.75rem; padding: 4px 0; }
+
+/* =========================================================
+   MANPOWER DIRECT-TYPING INPUT FIELD STYLING
+========================================================= */
+.mp-type-input {
+    width: 48px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: var(--white);
+    color: var(--navy-dark);
+    padding: 2px 0;
+    -moz-appearance: textfield; /* Hides arrows in Firefox */
+}
+
+/* Hides native browser spinner arrows in Chrome/Safari/Edge */
+.mp-type-input::-webkit-outer-spin-button,
+.mp-type-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Forces the invisible placeholder '0' to look like real, solid text */
+.mp-type-input::placeholder {
+    color: var(--navy-dark);
+    opacity: 1; /* Firefox fades placeholders to 50% by default; this overrides it */
+}
+
+/* If the user intentionally force-double-taps the number, hide the blue box */
+.mp-type-input::selection {
+    background: transparent;
+}
