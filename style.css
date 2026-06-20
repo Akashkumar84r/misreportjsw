@@ -1,0 +1,379 @@
+/* =========================================================
+   1. GLOBAL NATIVE APP SETUP & ANTI-SELECTION GUARDS
+========================================================= */
+:root {
+    --bg-main: #f4f7f6;
+    --card-bg: #eaf1fa;
+    --navy-dark: #0a192f;
+    --navy-card: #1e3a8a;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --white: #ffffff;
+    --accent-blue: #3b82f6;
+    --border-color: #cbd5e1;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: system-ui, -apple-system, sans-serif; 
+}
+
+body {
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    color: var(--text-main);
+    
+    /* Disables annoying text highlighting when clicking rapidly on mobile */
+    -webkit-touch-callout: none; /* iOS Safari long-press */
+    -webkit-user-select: none;   /* Safari */
+    user-select: none;           /* Standard syntax */
+}
+
+/* Critical Exception: Users must be allowed to type into input boxes */
+input, textarea, select {
+    -webkit-user-select: auto !important;
+    user-select: auto !important;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 440px; /* Standard mobile layout bounding box */
+    min-height: 100vh;
+    background-color: var(--white);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+/* =========================================================
+   2. APP FIXED COMPONENTS (HEADER & BOTTOM FOOTER)
+========================================================= */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--white);
+    z-index: 10;
+}
+.app-header h1 { 
+    font-size: 1.1rem; 
+    font-weight: 600; 
+    margin: 0 auto; 
+}
+.icon-btn { 
+    background: none; 
+    border: none; 
+    font-size: 1.4rem; 
+    cursor: pointer; 
+}
+
+.view-port { 
+    flex: 1; 
+    padding: 20px; 
+    padding-bottom: 90px; 
+    overflow-y: auto; 
+}
+.view { display: none; }
+.view.active { display: block; }
+.hidden { visibility: hidden; }
+
+.bottom-nav {
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 70px; 
+    background: #eaf1fa; 
+    border-top: 1px solid var(--border-color); 
+    display: flex;
+}
+.nav-tab { 
+    flex: 1; 
+    border: none; 
+    background: transparent; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 4px; 
+    color: var(--text-muted); 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    cursor: pointer; 
+}
+.nav-tab.active { 
+    color: var(--navy-dark); 
+    background: #dbeafe; 
+    font-weight: 700; 
+}
+.tab-icon { font-size: 1.3rem; }
+
+/* =========================================================
+   3. SCREEN 1: DASHBOARD LAYOUT
+========================================================= */
+.project-context { 
+    margin-bottom: 24px; 
+    border-left: 4px solid var(--navy-dark); 
+    padding-left: 12px;
+}
+.sub-label { 
+    font-size: 0.7rem; 
+    letter-spacing: 1px; 
+    color: var(--text-muted); 
+    font-weight: 700;
+}
+.project-context h2 { 
+    font-size: 1.8rem; 
+    color: var(--navy-dark); 
+    line-height: 1.1; 
+    margin: 4px 0 16px 0;
+}
+.meta-row { 
+    display: flex; 
+    gap: 24px; 
+    font-size: 0.85rem; 
+    font-weight: 600;
+}
+.meta-row small { 
+    color: var(--text-muted); 
+    display: block; 
+    font-weight: 500;
+}
+
+.nav-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #dbeafe;
+    transition: transform 0.1s ease;
+}
+.nav-card:active { transform: scale(0.98); }
+.card-icon { font-size: 1.8rem; margin-bottom: 12px; }
+.bg-watermark {
+    position: absolute;
+    right: -10px;
+    bottom: -15px;
+    font-size: 6rem;
+    opacity: 0.06;
+    user-select: none;
+    pointer-events: none;
+}
+.nav-card h3 { color: var(--navy-dark); margin-bottom: 6px; font-size: 1.2rem; }
+.nav-card p { 
+    font-size: 0.85rem; 
+    color: var(--text-muted); 
+    margin-bottom: 16px; 
+    max-width: 80%; 
+    line-height: 1.4; 
+}
+.card-link { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; color: var(--navy-dark); }
+
+.master-save {
+    width: 100%;
+    padding: 16px;
+    background-color: var(--navy-dark);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(10, 25, 47, 0.2);
+}
+
+/* =========================================================
+   4. SCREEN 3: ERECTION ACCORDIONS WITH SMOOTH SLIDE
+========================================================= */
+.sub-header-info { margin-bottom: 20px; }
+.sub-header-info h2 { color: var(--navy-dark); }
+.sub-header-info p { color: var(--text-muted); font-size: 0.9rem; }
+.pill { background: #e2e8f0; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+
+.zone-acc-item { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+.zone-acc-header {
+    padding: 14px 16px;
+    background: var(--white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    cursor: pointer;
+}
+.zone-acc-header small { display:block; font-size:0.75rem; color: var(--text-muted); font-weight: 400;}
+
+/* Dynamic height sliding wrapper */
+.zone-acc-body {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 16px;
+    background: #f8fafc;
+    transition: max-height 0.35s ease-in-out, padding 0.35s ease-in-out;
+    border-top: 1px solid transparent;
+}
+.zone-acc-item.open .zone-acc-body {
+    max-height: 300px; /* Dynamic drop limit ceiling */
+    padding: 16px;
+    border-top-color: var(--border-color);
+}
+.acc-arrow {
+    display: inline-block;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.zone-acc-item.open .acc-arrow {
+    transform: rotate(180deg);
+}
+
+.input-group { margin-bottom: 12px; }
+.input-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+.input-group input, .input-group select {
+    width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.9rem;
+}
+
+/* =========================================================
+   5. SCREEN 4: EQUIPMENT DETAILS
+========================================================= */
+.crane-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+.crane-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.crane-top h4 { font-size: 0.95rem; }
+.crane-top small { color: var(--text-muted); font-family: monospace; font-size: 0.75rem;}
+
+.toggle-switch {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 3px;
+    width: 100%;
+}
+.toggle-switch button {
+    flex: 1; padding: 8px; border: none; background: transparent; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); cursor: pointer;
+}
+.toggle-switch button.active { background: var(--white); color: var(--navy-dark); box-shadow: var(--shadow); }
+.toggle-switch button.active.engaged-btn { background: #dcfce7; color: #166534; }
+
+/* Dynamic height form for Engaged Cranes */
+.crane-details-form {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-in-out, margin-top 0.35s ease, padding-top 0.35s ease;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 1px solid transparent;
+}
+.crane-card.engaged .crane-details-form {
+    max-height: 220px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.sticky-equipment-footer, .sticky-manpower-footer {
+    position: sticky; bottom: -20px; background: var(--navy-dark); color: var(--white); padding: 16px; border-radius: 8px; margin-top: 24px; display: flex; justify-content: space-between; align-items: center;
+}
+.sticky-equipment-footer p, .sticky-manpower-footer h3 { font-size: 1.25rem; font-weight: 700; margin-top: 2px; }
+.asset-count { font-size: 1.4rem; font-weight: 700; }
+
+/* =========================================================
+   6. SCREEN 5: MANPOWER COUNTERS
+========================================================= */
+.mp-card {
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px;
+}
+.mp-info h4 { font-size: 0.95rem; }
+.mp-info small { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+.stepper { display: flex; align-items: center; gap: 12px; background: #f1f5f9; padding: 4px; border-radius: 6px; border: 1px solid #e2e8f0; }
+.stepper button { width: 32px; height: 32px; border: none; background: var(--white); border-radius: 4px; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+.stepper span { min-width: 24px; text-align: center; font-weight: 700; font-size: 0.95rem; }
+
+/* =========================================================
+   7. SCREEN 2: EXPANDABLE REPORTS FEED VIEW
+========================================================= */
+.report-draft-banner { background: #f8fafc; border: 1px solid var(--border-color); padding: 18px; border-radius: 8px; margin-bottom: 24px; position: relative; }
+.warning-badge { font-size: 0.7rem; font-weight: 700; color: #b45309; background: #fef3c7; padding: 4px 8px; border-radius: 4px; }
+.report-draft-banner h3 { margin: 10px 0 4px 0; }
+.report-draft-banner p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+.live-stats-grid { display: flex; gap: 30px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+.live-stats-grid small { font-size: 0.7rem; color: var(--text-muted); }
+.live-stats-grid h4 { font-size: 1.1rem; color: var(--navy-dark); }
+.reports-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 0.85rem; }
+
+/* Report Parent Containers */
+.report-item-card { 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px; 
+    margin-bottom: 12px; 
+    overflow: hidden; 
+    background: var(--white); 
+    box-shadow: var(--shadow);
+}
+.report-card-summary {
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.summary-right { 
+    text-align: right; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-end; 
+    gap: 8px; 
+}
+.expand-view-btn {
+    background: #e2e8f0; 
+    border: none; 
+    padding: 6px 12px; 
+    border-radius: 4px; 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    color: var(--navy-dark); 
+    cursor: pointer; 
+    transition: background 0.2s, color 0.2s;
+}
+.expand-view-btn:active { background: #cbd5e1; }
+
+/* Live Data Dropdown Menu on View Trigger */
+.report-detail-dropdown {
+    max-height: 0;
+    overflow: hidden;
+    background: #f8fafc;
+    padding: 0 16px;
+    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+    border-top: 1px solid transparent;
+}
+.report-item-card.open .report-detail-dropdown {
+    max-height: 1500px; /* Large ceiling to guarantee list does not get cut off */
+    padding: 16px;
+    border-top-color: var(--border-color);
+}
+
+.rep-sect { margin-bottom: 14px; font-size: 0.8rem;}
+.rep-sect h5 { 
+    color: var(--navy-card); 
+    border-bottom: 1px solid #cbd5e1; 
+    padding-bottom: 3px; 
+    margin-bottom: 6px; 
+    font-size: 0.75rem; 
+    text-transform: uppercase;
+}
+.rep-sect ul { list-style: none; padding-left: 4px; }
+.rep-sect li { display: flex; justify-content: space-between; padding: 4px 0; color: var(--text-main); border-bottom: 1px solid #f1f5f9; }
+.rep-sect li span { color: var(--text-muted); }
+.status-synced { display: inline-block; background: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 8px; }
+.empty-log { color: #94a3b8; font-style: italic; font-size: 0.75rem; padding: 4px 0; }

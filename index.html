@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction MIS Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header class="app-header">
+            <button id="back-btn" class="icon-btn hidden">←</button>
+            <h1 id="header-title">Construction MIS</h1>
+            <div class="header-actions">⋮</div>
+        </header>
+
+        <main class="view-port">
+
+            <section id="view-dashboard" class="view active">
+                <div class="project-context">
+                    <span class="sub-label">PROJECT OVERVIEW</span>
+                    <h2>SITE STATUS DASHBOARD</h2>
+                    <div class="meta-row">
+                        <div>
+                            <small>CURRENT SHIFT</small>
+                            <p id="display-shift">Day Shift B</p>
+                        </div>
+                        <div>
+                            <small>DATE</small>
+                            <p id="display-date">24-MAY-2024</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-card" data-target="view-erection">
+                    <div class="card-icon">🏗️</div>
+                    <div class="bg-watermark">🏗️</div>
+                    <h3>Erection Status</h3>
+                    <p>Update vertical and horizontal structural alignment data.</p>
+                    <span class="card-link">LOG PROGRESS ↗</span>
+                </div>
+
+                <div class="nav-card" data-target="view-equipment">
+                    <div class="card-icon">🦾</div>
+                    <div class="bg-watermark">🦾</div>
+                    <h3>Equipment Details</h3>
+                    <p>Log crane hours, idle time, and maintenance requirements.</p>
+                    <span class="card-link">VIEW ASSETS ⚙️</span>
+                </div>
+
+                <div class="nav-card" data-target="view-manpower">
+                    <div class="card-icon">👥</div>
+                    <div class="bg-watermark">👥</div>
+                    <h3>Manpower Details</h3>
+                    <p>Input workforce count, specialized trades, and safety hours.</p>
+                    <span class="card-link">TRACK TEAMS 🔍</span>
+                </div>
+
+                <button id="save-master-report" class="btn-primary master-save">SAVE MASTER REPORT</button>
+            </section>
+
+
+            <section id="view-reports" class="view">
+                <div class="report-draft-banner">
+                    <div class="banner-header">
+                        <span class="warning-badge">⚠️ DRAFT PENDING</span>
+                    </div>
+                    <h3>Finalize Daily Site Report</h3>
+                    <p>The report for <strong id="banner-date">Today</strong> is open. Any new submissions will overwrite today's record.</p>
+                    
+                    <div class="live-stats-grid">
+                        <div>
+                            <small>MANPOWER LOGGED</small>
+                            <h4 id="stat-mp">0</h4>
+                        </div>
+                        <div>
+                            <small>CRANES ENGAGED</small>
+                            <h4 id="stat-eq">0 / 19</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reports-header-row">
+                    <h3>Recent Reports</h3>
+                    <small>FILTER BY DATE 🔻</small>
+                </div>
+
+                <div id="reports-list-container" class="reports-feed">
+                    </div>
+            </section>
+
+
+            <section id="view-erection" class="view sub-view">
+                <div class="sub-header-info">
+                    <h2>Erection Status</h2>
+                    <p>Select a work zone to update daily tonnage.</p>
+                </div>
+                <div id="zones-accordion" class="accordion-group">
+                    </div>
+            </section>
+
+
+            <section id="view-equipment" class="view sub-view">
+                <div class="sub-header-info">
+                    <h2>Equipment Deployment</h2>
+                    <p>Real-time crane utilization and task assignment.</p>
+                </div>
+                <div id="cranes-list" class="crane-group">
+                    </div>
+                <div class="sticky-equipment-footer">
+                    <div>
+                        <small>Daily Fleet Overview</small>
+                        <p>Active Assets</p>
+                    </div>
+                    <div class="asset-count"><span id="active-crane-count">01</span> / 19</div>
+                </div>
+            </section>
+
+
+            <section id="view-manpower" class="view sub-view">
+                <div class="sub-header-info">
+                    <span class="pill">FIELD REPORT</span>
+                    <h2>Daily Manpower Entry</h2>
+                    <p>Site Code: IND-HARYANA-092</p>
+                </div>
+                <div id="manpower-list" class="manpower-group">
+                    </div>
+                <div class="sticky-manpower-footer">
+                    <small>AGGREGATE STRENGTH</small>
+                    <h3>Total Manpower: <span id="total-mp-count">0</span></h3>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="bottom-nav">
+            <button class="nav-tab active" data-view="view-dashboard">
+                <span class="tab-icon">🎛️</span>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-tab" data-view="view-reports">
+                <span class="tab-icon">📄</span>
+                <span>Reports</span>
+            </button>
+        </footer>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
