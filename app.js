@@ -1,8 +1,21 @@
 // ============================================================================
-// 1. MASTER DATA ARRAYS
+// 1. MASTER DATA ARRAYS (CRANES NOW AUTO-SORTED BY "NATURAL" ALPHABET)
 // ============================================================================
-const ZONES = ["BF-Shell", "Middle Tower", "Cast House West", "Cast House East", "Main ECR", "DGCP", "Cyclone", "HS#01", "HS#02", "HS#03", "HS#04", "Stove Housing", "Chimney", "MCC Gallery", "Stock House", "Pump house"];
-const CRANES = [{ id: "CR-TE-001", name: "TEREX 80T" }, { id: "CR-ZL-042", name: "Zoomlion 80T" }, { id: "CR-SN-080", name: "SANY 80T" }, { id: "CR-SN-085", name: "SANY 85T" }, { id: "CR-MT-085A", name: "Manitowoc 85T (A)" }, { id: "CR-MT-085B", name: "Manitowoc 85T (B)" }, { id: "CR-SN-909", name: "SANY 90T" }, { id: "CR-KB-100", name: "Kobelco 100T" }, { id: "CR-ZL-110", name: "Zoomlion 110T" }, { id: "CR-XCMG-160", name: "XCMG 160T" }, { id: "CR-SN-150A", name: "Sany 150T (A)" }, { id: "CR-SN-150B", name: "Sany 150T (B)" }, { id: "CR-ZL-150", name: "Zoomlion 150T" }, { id: "CR-XCMG-150", name: "XCMG 150T" }, { id: "CR-XCMG-080", name: "XCMG 80T" }, { id: "CR-TX-400", name: "Terex 400T" }, { id: "CR-TX-600A", name: "Terex 600T (A)" }, { id: "CR-TX-600B", name: "Terex 600T (B)" }, { id: "CR-LG-750", name: "LIEBHERR 750T" }];
+const ZONES = ["BF-Shell", "Furnace Proper", "Middle Tower", "Cast House West", "Cast House East", "Main ECR", "DGCP", "Cyclone", "HS#01", "HS#02", "HS#03", "HS#04", "Stove Housing", "Chimney", "MCC Gallery", "Stock House", "Pump house"];
+
+const CRANES = [
+    { id: "CR-TE-001", name: "TEREX 80T" }, { id: "CR-ZL-042", name: "Zoomlion 110T" },
+    { id: "CR-SN-080", name: "SANY 80T" }, { id: "CR-SN-085", name: "SANY 85T" },
+    { id: "CR-MT-085A", name: "Manitowoc 85T (A)" }, { id: "CR-MT-085B", name: "Manitowoc 85T (B)" },
+    { id: "CR-SN-909", name: "SANY 90T" }, { id: "CR-KB-100", name: "Kobelco 100T" },
+    { id: "CR-ZL-110", name: "Zoomlion 110T" }, { id: "CR-XCMG-160", name: "XCMG 160T" },
+    { id: "CR-SN-150A", name: "Sany 150T (A)" }, { id: "CR-SN-150B", name: "Sany 150T (B)" },
+    { id: "CR-ZL-150", name: "Zoomlion 150T" }, { id: "CR-XCMG-150", name: "XCMG 150T" },
+    { id: "CR-XCMG-080", name: "XCMG 80T" }, { id: "CR-TX-400", name: "Terex 400T" },
+    { id: "CR-TX-600A", name: "Terex 600T (A)" }, { id: "CR-TX-600B", name: "Terex 600T (B)" },
+    { id: "CR-LG-750", name: "LIEBHERR 750T" }
+].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
 const MANPOWER = [{ id: "eng", name: "Engineers", sub: "Supervisory Grade" }, { id: "sup", name: "Supervisors", sub: "Mid-level Mgmt" }, { id: "form", name: "Foreman", sub: "Site Execution" }, { id: "fit", name: "Fitters", sub: "Skilled Labor" }, { id: "fab", name: "Fabricater", sub: "Production Grade" }, { id: "weld", name: "Welder", sub: "High Skill Grade" }, { id: "rig", name: "Riggers", sub: "Material Handling" }, { id: "khal", name: "Khalasi", sub: "Support Crew" }, { id: "grin", name: "Grinder", sub: "Finishing Grade" }, { id: "gas", name: "Gas cutter", sub: "Metal Preparation" }, { id: "tw", name: "T/W", sub: "Watch & Monitor" }, { id: "store", name: "Store-keeper", sub: "Inventory Mgmt" }, { id: "help", name: "Helper", sub: "General Labor" }];
 
 const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyzydefb_jHkmoL6VTbE6WyOCkSSDJSNbeZXxL3Sy-zYzXfzwqClrZ0G6uUIOpKj4do/exec";
@@ -12,21 +25,15 @@ const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyzydefb_jHkmo
 // 2. INDUSTRIAL CLOCK & SHIFT CALCULATOR
 // ============================================================================
 function getLiveShiftInfo() {
-    const now = new Date();
-    const hrs = now.getHours();
-    let shiftName = "";
-    let prodDate = new Date(now);
+    const now = new Date(); const hrs = now.getHours();
+    let shiftName = ""; let prodDate = new Date(now);
 
-    if (hrs >= 6 && hrs < 14) {
-        shiftName = "Shift A (06:00 - 14:00)";
-    } else if (hrs >= 14 && hrs < 22) {
-        shiftName = "Shift B (14:00 - 22:00)";
-    } else {
+    if (hrs >= 6 && hrs < 14) shiftName = "Shift A (06:00 - 14:00)";
+    else if (hrs >= 14 && hrs < 22) shiftName = "Shift B (14:00 - 22:00)";
+    else {
         shiftName = "Shift C (22:00 - 06:00)";
-        // Night-Shift Trap: Work done between Midnight and 05:59 AM belongs to yesterday
         if (hrs < 6) prodDate.setDate(prodDate.getDate() - 1);
     }
-
     return { shift: shiftName, dateStr: prodDate.toISOString().split('T')[0] };
 }
 
@@ -38,22 +45,19 @@ let todaysDraft = {
 
 
 // ============================================================================
-// 3. SMART SPA ROUTER (HASH-BASED BACK BUTTON)
+// 3. SMART SPA ROUTER
 // ============================================================================
 window.addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; });
 
 function setupSmartBackGuard() {
     history.replaceState({ view: 'view-dashboard' }, "", "#dashboard");
-
     window.addEventListener('popstate', (event) => {
         let state = event.state;
         if (state && state.view === 'view-dashboard') {
-            renderActiveScreen('view-dashboard', 'Construction MIS', false);
-            return;
+            renderActiveScreen('view-dashboard', 'Construction MIS', false); return;
         }
         if (!state || state.view !== 'view-dashboard') {
-            let stay = confirm("⚠️ Tapping 'Back' will close the MIS Dashboard. Do you want to stay?");
-            if (stay) {
+            if (confirm("⚠️ Tapping 'Back' will close the MIS Dashboard. Do you want to stay?")) {
                 history.pushState({ view: 'view-dashboard' }, "", "#dashboard");
                 renderActiveScreen('view-dashboard', 'Construction MIS', false);
             }
@@ -84,12 +88,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftDom = document.getElementById("display-shift");
     if (shiftDom) shiftDom.innerText = live.shift;
 
-    setupSmartBackGuard();
-    loadTodaysStateIfSaved();
-    renderErectionZones();
-    renderEquipmentCranes();
-    renderManpowerList();
-    renderSavedReportsHistory();
+    // Dynamically inject the Dolvi Site code into the HTML
+    const siteCodeDom = document.querySelector("#view-manpower .sub-header-info p");
+    if (siteCodeDom) siteCodeDom.innerText = "Site Code: JSW-Dolvi-BF#3";
+
+    setupSmartBackGuard(); loadTodaysStateIfSaved();
+    renderErectionZones(); renderEquipmentCranes();
+    renderManpowerList();  renderSavedReportsHistory();
     setupNavigationHandlers();
 });
 
@@ -97,11 +102,9 @@ function loadTodaysStateIfSaved() {
     const live = getLiveShiftInfo();
     let saved = JSON.parse(localStorage.getItem("mis_reports") || "{}");
     
-    if (saved[live.dateStr]) { 
-        todaysDraft = saved[live.dateStr]; 
-    } else {
-        todaysDraft.date = live.dateStr;
-        todaysDraft.shift = live.shift;
+    if (saved[live.dateStr]) todaysDraft = saved[live.dateStr]; 
+    else {
+        todaysDraft.date = live.dateStr; todaysDraft.shift = live.shift;
         MANPOWER.forEach(m => todaysDraft.manpower[m.name] = 0);
         CRANES.forEach(c => todaysDraft.equipment[c.id] = { state: "IDLE", zone: "", load: "" });
     }
@@ -109,7 +112,7 @@ function loadTodaysStateIfSaved() {
 
 
 // ============================================================================
-// 5. ERECTION & WORKFORCE RENDERERS
+// 5. ERECTION & MANPOWER (NOW WITH DIRECT NUMBER TYPING)
 // ============================================================================
 function renderErectionZones() {
     const container = document.getElementById("zones-accordion");
@@ -126,16 +129,99 @@ function saveErection(z, f, v) {
 }
 function toggleAcc(el) { el.parentElement.classList.toggle("open"); }
 
+// function renderManpowerList() {
+//     document.getElementById("manpower-list").innerHTML = MANPOWER.map(t => {
+//         let count = todaysDraft.manpower[t.name] || 0;
+//         return `
+//             <div class="mp-card">
+//                 <div class="mp-info"><h4>${t.name}</h4><small>${t.sub}</small></div>
+//                 <div class="stepper">
+//                     <button onclick="changeMp('${t.name}', -1)">−</button>
+//                     <input type="number" class="mp-type-input" id="mp-val-${t.id}" value="${count}" 
+//                            oninput="typeMp('${t.name}', this.value)" 
+//                            onfocus="this.select()" 
+//                            onblur="cleanMpInput(this, '${t.name}')">
+//                     <button onclick="changeMp('${t.name}', 1)">+</button>
+//                 </div>
+//             </div>
+//         `;
+//     }).join("");
+//     updateMpTotal();
+// }
+
 function renderManpowerList() {
-    document.getElementById("manpower-list").innerHTML = MANPOWER.map(t => `<div class="mp-card"><div class="mp-info"><h4>${t.name}</h4><small>${t.sub}</small></div><div class="stepper"><button onclick="changeMp('${t.name}', -1)">−</button><span id="mp-val-${t.id}">${todaysDraft.manpower[t.name] || 0}</span><button onclick="changeMp('${t.name}', 1)">+</button></div></div>`).join("");
+    document.getElementById("manpower-list").innerHTML = MANPOWER.map(t => {
+        let count = todaysDraft.manpower[t.name] || 0;
+        
+        // THE PLACEHOLDER HACK: If count is 0, pass an empty string ""
+        let displayVal = count === 0 ? "" : count; 
+
+        return `
+            <div class="mp-card">
+                <div class="mp-info"><h4>${t.name}</h4><small>${t.sub}</small></div>
+                <div class="stepper">
+                    <button onclick="changeMp('${t.name}', -1)">−</button>
+                    <input type="number" class="mp-type-input" id="mp-val-${t.id}" 
+                           value="${displayVal}" placeholder="0"
+                           oninput="typeMp('${t.name}', this.value)" 
+                           onblur="cleanMpInput(this, '${t.name}')">
+                    <button onclick="changeMp('${t.name}', 1)">+</button>
+                </div>
+            </div>
+        `;
+    }).join("");
     updateMpTotal();
 }
+
 function changeMp(n, delta) {
-    let nxt = Math.max(0, (todaysDraft.manpower[n] || 0) + delta);
+    let current = todaysDraft.manpower[n] || 0;
+    let nxt = Math.max(0, current + delta);
     todaysDraft.manpower[n] = nxt;
-    document.getElementById(`mp-val-${MANPOWER.find(m => m.name === n).id}`).innerText = nxt;
+    
+    // If the math results in 0, turn it back into an empty string
+    document.getElementById(`mp-val-${MANPOWER.find(m => m.name === n).id}`).value = nxt === 0 ? "" : nxt; 
     updateMpTotal();
 }
+
+function typeMp(n, valStr) {
+    let clean = valStr === "" ? 0 : Math.max(0, parseInt(valStr) || 0);
+    todaysDraft.manpower[n] = clean;
+    updateMpTotal();
+}
+
+function cleanMpInput(inputDom, tradeName) {
+    if (inputDom.value === "" || parseInt(inputDom.value) <= 0) {
+        inputDom.value = ""; // Keep it empty so the placeholder '0' sits there
+        todaysDraft.manpower[tradeName] = 0;
+        updateMpTotal();
+    }
+}
+
+// Fired when clicking the + or - buttons
+function changeMp(n, delta) {
+    let current = todaysDraft.manpower[n] || 0;
+    let nxt = Math.max(0, current + delta);
+    todaysDraft.manpower[n] = nxt;
+    document.getElementById(`mp-val-${MANPOWER.find(m => m.name === n).id}`).value = nxt;
+    updateMpTotal();
+}
+
+// Fired instantly as the user types digits on their keyboard
+function typeMp(n, valStr) {
+    let clean = valStr === "" ? 0 : Math.max(0, parseInt(valStr) || 0);
+    todaysDraft.manpower[n] = clean;
+    updateMpTotal();
+}
+
+// Fired when user clicks away from the input box
+function cleanMpInput(inputDom, tradeName) {
+    if (inputDom.value === "" || parseInt(inputDom.value) < 0) {
+        inputDom.value = "0";
+        todaysDraft.manpower[tradeName] = 0;
+        updateMpTotal();
+    }
+}
+
 function updateMpTotal() {
     let tot = Object.values(todaysDraft.manpower).reduce((s, v) => s + v, 0);
     document.getElementById("total-mp-count").innerText = tot;
@@ -144,7 +230,7 @@ function updateMpTotal() {
 
 
 // ============================================================================
-// 6. EQUIPMENT RENDERER (WITH "OTHERS" OPTION)
+// 6. EQUIPMENT RENDERER (ASSET IDs STRIPPED)
 // ============================================================================
 function renderEquipmentCranes() {
     const container = document.getElementById("cranes-list");
@@ -156,7 +242,7 @@ function renderEquipmentCranes() {
         let isEngaged = data.state === "ENGAGED";
         return `
             <div class="crane-card ${isEngaged ? 'engaged' : ''}" data-crane-id="${crane.id}">
-                <div class="crane-top"><div><h4>${crane.name}</h4><small>ASSET ID: ${crane.id}</small></div></div>
+                <div class="crane-top"><h4 style="margin:2px 0;">${crane.name}</h4></div>
                 <div class="toggle-switch">
                     <button class="${!isEngaged ? 'active' : ''}" onclick="setCraneState('${crane.id}', 'IDLE')">IDLE</button>
                     <button class="${isEngaged ? 'active engaged-btn' : ''}" onclick="setCraneState('${crane.id}', 'ENGAGED')">ENGAGED</button>
@@ -198,15 +284,12 @@ function updateCraneCounter() {
 
 
 // ============================================================================
-// 7. MASTER SAVE TRANSMITTER & VALIDATION PUNISHER
+// 7. MASTER SAVE TRANSMITTER
 // ============================================================================
 document.getElementById("save-master-report").addEventListener("click", async () => {
-
     const timeAtSave = getLiveShiftInfo();
-    todaysDraft.date = timeAtSave.dateStr;
-    todaysDraft.shift = timeAtSave.shift;
+    todaysDraft.date = timeAtSave.dateStr; todaysDraft.shift = timeAtSave.shift;
 
-    // Strict validation on engaged cranes
     let violatingCrane = null;
     for (let c of CRANES) {
         let draft = todaysDraft.equipment[c.id];
@@ -230,7 +313,6 @@ document.getElementById("save-master-report").addEventListener("click", async ()
         return;
     }
 
-    // Write to Phone storage
     let allReports = JSON.parse(localStorage.getItem("mis_reports") || "{}");
     allReports[timeAtSave.dateStr] = todaysDraft;
     localStorage.setItem("mis_reports", JSON.stringify(allReports));
@@ -239,24 +321,22 @@ document.getElementById("save-master-report").addEventListener("click", async ()
     saveBtn.innerText = "⏳ TRANSMITTING..."; saveBtn.style.backgroundColor = "#b45309"; saveBtn.disabled = true;
 
     try {
-        if(GOOGLE_SHEET_URL.includes("YOUR_ACTUAL")) throw new Error("Google script unlinked");
+        if(GOOGLE_SHEET_URL.includes("YOUR_ACTUAL")) throw new Error("Unlinked URL");
         await fetch(GOOGLE_SHEET_URL, {
             method: "POST", mode: "no-cors",
             headers: { "Content-Type": "text/plain" }, body: JSON.stringify(todaysDraft)
         });
         alert(`✅ Master Report for ${timeAtSave.dateStr} (${timeAtSave.shift}) logged successfully!`);
-    } catch (err) {
-        console.log("Offline mode: Saved safely to local device cache.");
-    } finally {
+    } catch (err) { console.log("Offline mode: Saved safely to phone memory."); } 
+    finally {
         saveBtn.innerText = "SAVE MASTER REPORT"; saveBtn.style.backgroundColor = ""; saveBtn.disabled = false;
-        renderSavedReportsHistory();
-        document.querySelector('.nav-tab[data-view="view-reports"]').click();
+        renderSavedReportsHistory(); document.querySelector('.nav-tab[data-view="view-reports"]').click();
     }
 });
 
 
 // ============================================================================
-// 8. HISTORIC FEED & NAVIGATION HANDLERS
+// 8. HISTORIC FEED & NAVIGATION
 // ============================================================================
 function renderSavedReportsHistory() {
     const feed = document.getElementById("reports-list-container");
