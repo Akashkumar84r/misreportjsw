@@ -126,19 +126,37 @@ document.addEventListener("DOMContentLoaded", () => {
 function setupLoginScreen() {
     const loginBtn = document.getElementById("btn-submit-login");
     const errDom = document.getElementById("login-error-msg");
+    const uidInput = document.getElementById("login-uid");
+    const pwdInput = document.getElementById("login-pwd");
 
-    loginBtn.addEventListener("click", () => {
-        let enteredUid = document.getElementById("login-uid").value.trim();
-        let enteredPwd = document.getElementById("login-pwd").value.trim();
+    function executeAuth() {
+        let enteredUid = uidInput.value.trim();
+        let enteredPwd = pwdInput.value.trim();
 
         if (enteredUid === FIXED_UID && enteredPwd === FIXED_PWD) {
             errDom.innerText = "";
-            localStorage.setItem("jsw_portal_auth", "granted"); // Save session
+            localStorage.setItem("jsw_portal_auth", "granted"); 
             unlockPortal();
         } else {
             errDom.innerText = "❌ Authentication Rejected: Invalid ID or PIN";
-            document.getElementById("login-pwd").value = ""; // Clear PIN box
-            document.getElementById("login-pwd").focus();
+            pwdInput.value = ""; // Wipe the PIN box
+            pwdInput.focus();    // Drop keypad back into PIN box automatically
+        }
+    }
+
+    // Trigger 1: Tapping the physical button
+    loginBtn.addEventListener("click", executeAuth);
+
+    // Trigger 2: Hitting "Enter" / "Done" on the phone's keypad inside the PIN box
+    pwdInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") executeAuth();
+    });
+
+    // UX bonus: Hitting "Enter" on the User ID box instantly jumps down to the PIN box
+    uidInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            pwdInput.focus();
         }
     });
 }
