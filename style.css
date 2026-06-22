@@ -469,3 +469,11 @@ body.auth-locked .view-port {
     line-height: 1.4;
 }
 
+.login-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #dbeafe;
+    box-shadow: var(--shadow);
+}
+
