@@ -6,7 +6,7 @@
     <title>Construction MIS Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="auth-locked">
 
     <div class="app-container">
         
@@ -17,8 +17,34 @@
         </header>
 
         <main class="view-port">
+            <section id="view-login" class="view active">
+                <div class="login-wrapper">
+                <div class="login-logo-badge">JSW</div>
+                <span class="sub-label" style="text-align: center; display: block;">BLAST FURNACE #3</span>
+                <h2 style="color: var(--navy-dark); text-align: center; margin: 4px 0 28px 0;">MIS SECURE PORTAL</h2>
 
-            <section id="view-dashboard" class="view active">
+          <div class="nav-card" style="cursor: default; transform: none;">
+                <div class="input-group">
+                    <label>Authorized User ID</label>
+                    <input type="text" id="login-uid" placeholder="e.g. Jswmis@5" autocapitalize="none" autocomplete="off">
+           </div>
+
+            <div class="input-group" style="margin-top: 16px;">
+                <label>Security PIN</label>
+                <input type="password" id="login-pwd" inputmode="numeric" pattern="[0-9]*" placeholder="••••" maxlength="4">
+            </div>
+
+            <button id="btn-submit-login" class="master-save" style="margin-top: 24px;">AUTHENTICATE</button>
+            <p id="login-error-msg" class="error-msg"></p>
+        </div>
+        
+        <div class="login-footer-note">
+            🛡️ Enterprise MIS Data Collection Engine<br>
+            <small>Restricted Access Only</small>
+        </div>
+    </div>
+</section>
+            <section id="view-dashboard" class="view">
                 <div class="project-context">
                     <span class="sub-label">PROJECT OVERVIEW</span>
                     <h2>SITE STATUS DASHBOARD</h2>
