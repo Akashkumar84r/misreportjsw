@@ -1,10 +1,14 @@
 // ============================================================================
-// 1. MASTER DATA ARRAYS (CRANES NOW AUTO-SORTED BY "NATURAL" ALPHABET)
+// 1. SYSTEM CONFIGURATION & AUTHENTICATION CONSTANTS
 // ============================================================================
+const FIXED_UID = "Jswmis@5";
+const FIXED_PWD = "1234";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/YOUR_ACTUAL_SCRIPT_ID_HERE/exec";
+
 const ZONES = ["BF-Shell", "Furnace Proper", "Middle Tower", "Cast House West", "Cast House East", "Main ECR", "DGCP", "Cyclone", "HS#01", "HS#02", "HS#03", "HS#04", "Stove Housing", "Chimney", "MCC Gallery", "Stock House", "Pump house"];
 
 const CRANES = [
-    { id: "CR-TE-001", name: "TEREX 80T" }, { id: "CR-ZL-042", name: "Zoomlion 110T" },
+    { id: "CR-TE-001", name: "TEREX 80T" }, { id: "CR-ZL-042", name: "Zoomlion 80T" },
     { id: "CR-SN-080", name: "SANY 80T" }, { id: "CR-SN-085", name: "SANY 85T" },
     { id: "CR-MT-085A", name: "Manitowoc 85T (A)" }, { id: "CR-MT-085B", name: "Manitowoc 85T (B)" },
     { id: "CR-SN-909", name: "SANY 90T" }, { id: "CR-KB-100", name: "Kobelco 100T" },
@@ -18,11 +22,9 @@ const CRANES = [
 
 const MANPOWER = [{ id: "eng", name: "Engineers", sub: "Supervisory Grade" }, { id: "sup", name: "Supervisors", sub: "Mid-level Mgmt" }, { id: "form", name: "Foreman", sub: "Site Execution" }, { id: "fit", name: "Fitters", sub: "Skilled Labor" }, { id: "fab", name: "Fabricater", sub: "Production Grade" }, { id: "weld", name: "Welder", sub: "High Skill Grade" }, { id: "rig", name: "Riggers", sub: "Material Handling" }, { id: "khal", name: "Khalasi", sub: "Support Crew" }, { id: "grin", name: "Grinder", sub: "Finishing Grade" }, { id: "gas", name: "Gas cutter", sub: "Metal Preparation" }, { id: "tw", name: "T/W", sub: "Watch & Monitor" }, { id: "store", name: "Store-keeper", sub: "Inventory Mgmt" }, { id: "help", name: "Helper", sub: "General Labor" }];
 
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyzydefb_jHkmoL6VTbE6WyOCkSSDJSNbeZXxL3Sy-zYzXfzwqClrZ0G6uUIOpKj4do/exec";
-
 
 // ============================================================================
-// 2. INDUSTRIAL CLOCK & SHIFT CALCULATOR
+// 2. INDUSTRIAL TIME ENGINE
 // ============================================================================
 function getLiveShiftInfo() {
     const now = new Date(); const hrs = now.getHours();
@@ -45,12 +47,8 @@ let todaysDraft = {
 
 
 // ============================================================================
-// 3. SECURE AUTHENTICATION & SPA ROUTER
+// 3. SMART SPA ROUTER & VIEW CONTROLLER
 // ============================================================================
-
-const FIXED_UID = "Jswmis@5";
-const FIXED_PWD = "1234";
-
 window.addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; });
 
 function setupSmartRouter() {
@@ -60,16 +58,13 @@ function setupSmartRouter() {
         let isAuth = localStorage.getItem("jsw_portal_auth") === "granted";
         let state = event.state;
 
-        // If user hits back and isn't logged in, keep them trapped on Login
         if (!isAuth) {
             history.replaceState({ view: 'view-login' }, "", "#login");
-            renderActiveScreen('view-login', '', false);
-            return;
+            renderActiveScreen('view-login', '', false); return;
         }
 
         if (state && state.view === 'view-dashboard') {
-            renderActiveScreen('view-dashboard', 'Construction MIS', false);
-            return;
+            renderActiveScreen('view-dashboard', 'Construction MIS', false); return;
         }
 
         if (!state || state.view !== 'view-dashboard') {
@@ -83,9 +78,21 @@ function setupSmartRouter() {
 
 function renderActiveScreen(targetId, title, isSubView) {
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    document.getElementById(targetId).classList.add("active");
-    document.getElementById("header-title").innerText = title;
-    document.getElementById("back-btn").classList.toggle("hidden", !isSubView);
+    
+    // Forgiving DOM finder: Try exact ID first, if failed, try stripping "view-" 
+    let targetEl = document.getElementById(targetId) || document.getElementById(targetId.replace('view-', ''));
+    
+    if (targetEl) {
+        targetEl.classList.add("active");
+    } else {
+        console.error("CRITICAL ERROR: Could not find HTML tag with id=", targetId);
+    }
+
+    let titleDom = document.getElementById("header-title");
+    if (titleDom) titleDom.innerText = title;
+
+    let backBtn = document.getElementById("back-btn");
+    if (backBtn) backBtn.classList.toggle("hidden", !isSubView);
 }
 
 function navigateTo(targetId, title, isSubView) {
@@ -95,18 +102,16 @@ function navigateTo(targetId, title, isSubView) {
 
 
 // ============================================================================
-// 4. BOOTSTRAP APP ON LOAD (WITH SESSION MEMORY)
+// 4. BOOTSTRAP INITIALIZER
 // ============================================================================
-
 document.addEventListener("DOMContentLoaded", () => {
     const live = getLiveShiftInfo();
-    document.getElementById("display-date").innerText = live.dateStr;
-    document.getElementById("banner-date").innerText = live.dateStr;
-    const shiftDom = document.getElementById("display-shift");
-    if (shiftDom) shiftDom.innerText = live.shift;
+    let dDom = document.getElementById("display-date"); if(dDom) dDom.innerText = live.dateStr;
+    let bDom = document.getElementById("banner-date");  if(bDom) bDom.innerText = live.dateStr;
+    let sDom = document.getElementById("display-shift"); if(sDom) sDom.innerText = live.shift;
 
-    const siteCodeDom = document.querySelector("#view-manpower .sub-header-info p");
-    if (siteCodeDom) siteCodeDom.innerText = "Site Code: JSW-Dolvi-BF#3";
+    let codeDom = document.querySelector("#view-manpower .sub-header-info p");
+    if (codeDom) codeDom.innerText = "Site Code: JSW-Dolvi-BF#3";
 
     setupSmartRouter();
     loadTodaysStateIfSaved();
@@ -114,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderManpowerList();  renderSavedReportsHistory();
     setupNavigationHandlers();
 
-    // --- CHECK SESSION MEMORY ON BOOT ---
+    // Session Gatekeeper
     if (localStorage.getItem("jsw_portal_auth") === "granted") {
         unlockPortal();
     } else {
@@ -122,289 +127,197 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+function loadTodaysStateIfSaved() {
+    const live = getLiveShiftInfo();
+    let saved = JSON.parse(localStorage.getItem("mis_reports") || "{}");
+    if (saved[live.dateStr]) todaysDraft = saved[live.dateStr]; 
+    else {
+        todaysDraft.date = live.dateStr; todaysDraft.shift = live.shift;
+        MANPOWER.forEach(m => todaysDraft.manpower[m.name] = 0);
+        CRANES.forEach(c => todaysDraft.equipment[c.id] = { state: "IDLE", zone: "", load: "" });
+    }
+}
 
+
+// ============================================================================
+// 5. LOGIN SCREEN CONTROLLER (WITH FAILSAFE OVERRIDES)
+// ============================================================================
 function setupLoginScreen() {
     const loginBtn = document.getElementById("btn-submit-login");
     const errDom = document.getElementById("login-error-msg");
     const uidInput = document.getElementById("login-uid");
     const pwdInput = document.getElementById("login-pwd");
 
+    if (!loginBtn || !uidInput || !pwdInput) {
+        console.error("LOGIN ABORTED: Check your HTML login input IDs!");
+        return;
+    }
+
     function executeAuth() {
         let enteredUid = uidInput.value.trim();
         let enteredPwd = pwdInput.value.trim();
 
         if (enteredUid === FIXED_UID && enteredPwd === FIXED_PWD) {
-            errDom.innerText = "";
+            if(errDom) errDom.innerText = "";
             localStorage.setItem("jsw_portal_auth", "granted"); 
             unlockPortal();
         } else {
-            errDom.innerText = "❌ Authentication Rejected: Invalid ID or PIN";
-            pwdInput.value = ""; // Wipe the PIN box
-            pwdInput.focus();    // Drop keypad back into PIN box automatically
+            if(errDom) errDom.innerText = "❌ Authentication Rejected: Invalid ID or PIN";
+            pwdInput.value = ""; 
+            pwdInput.focus();
         }
     }
 
-    // Trigger 1: Tapping the physical button
-    loginBtn.addEventListener("click", executeAuth);
+    // Using .onclick guarantees we don't accidentally stack multiple event listeners
+    loginBtn.onclick = executeAuth;
 
-    // Trigger 2: Hitting "Enter" / "Done" on the phone's keypad inside the PIN box
-    pwdInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") executeAuth();
-    });
-
-    // UX bonus: Hitting "Enter" on the User ID box instantly jumps down to the PIN box
-    uidInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            pwdInput.focus();
-        }
-    });
+    pwdInput.addEventListener("keydown", (e) => { if (e.key === "Enter") executeAuth(); });
+    uidInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); pwdInput.focus(); } });
 }
 
-
 function unlockPortal() {
-    // 1. Rip the invisibility cloak off the body
     document.body.classList.remove("auth-locked");
-
-    // 2. Push user into the dashboard
     history.pushState({ view: 'view-dashboard' }, "", "#dashboard");
     renderActiveScreen('view-dashboard', 'Construction MIS', false);
 }
 
 
-
 // ============================================================================
-// 5. ERECTION & MANPOWER (NOW WITH DIRECT NUMBER TYPING)
+// 6. ERECTION & MANPOWER RENDERERS
 // ============================================================================
 function renderErectionZones() {
     const container = document.getElementById("zones-accordion");
+    if(!container) return;
     container.innerHTML = ZONES.map(z => {
         let d = todaysDraft.erection[z] || { mt: "", remarks: "" };
         let hasVal = parseFloat(d.mt) > 0;
-        return `<div class="zone-acc-item" data-zone="${z}"><div class="zone-acc-header" onclick="toggleAcc(this)"><div><span>${z}</span><small class="preview-text">${hasVal ? `Logged: ${d.mt} MT` : 'No data'}</small></div><span class="acc-arrow">🔻</span></div><div class="zone-acc-body"><div class="input-group"><label>Quantity (MT)</label><input type="number" step="0.1" value="${d.mt}" placeholder="0.00" oninput="saveErection('${z}', 'mt', this.value)"></div><div class="input-group"><label>Remarks</label><input type="text" value="${d.remarks}" placeholder="e.g. Columns C4-C8" oninput="saveErection('${z}', 'remarks', this.value)"></div></div></div>`;
+        return `<div class="zone-acc-item" data-zone="${z}"><div class="zone-acc-header" onclick="toggleAcc(this)"><div><span>${z}</span><small class="preview-text">${hasVal ? `Logged: ${d.mt} MT` : 'No data'}</small></div><span class="acc-arrow"></span></div><div class="zone-acc-body"><div class="input-group"><label>Quantity (MT)</label><input type="number" step="0.1" value="${d.mt}" placeholder="0.00" oninput="saveErection('${z}', 'mt', this.value)"></div><div class="input-group"><label>Remarks</label><input type="text" value="${d.remarks}" placeholder="e.g. Columns C4-C8" oninput="saveErection('${z}', 'remarks', this.value)"></div></div></div>`;
     }).join("");
 }
 function saveErection(z, f, v) {
     if (!todaysDraft.erection[z]) todaysDraft.erection[z] = { mt: "", remarks: "" };
     todaysDraft.erection[z][f] = v;
-    document.querySelector(`.zone-acc-item[data-zone="${z}"] .preview-text`).innerText = parseFloat(todaysDraft.erection[z].mt) > 0 ? `Logged: ${todaysDraft.erection[z].mt} MT` : 'No data';
+    let pDom = document.querySelector(`.zone-acc-item[data-zone="${z}"] .preview-text`);
+    if(pDom) pDom.innerText = parseFloat(todaysDraft.erection[z].mt) > 0 ? `Logged: ${todaysDraft.erection[z].mt} MT` : 'No data';
 }
 function toggleAcc(el) { el.parentElement.classList.toggle("open"); }
 
-// function renderManpowerList() {
-//     document.getElementById("manpower-list").innerHTML = MANPOWER.map(t => {
-//         let count = todaysDraft.manpower[t.name] || 0;
-//         return `
-//             <div class="mp-card">
-//                 <div class="mp-info"><h4>${t.name}</h4><small>${t.sub}</small></div>
-//                 <div class="stepper">
-//                     <button onclick="changeMp('${t.name}', -1)">−</button>
-//                     <input type="number" class="mp-type-input" id="mp-val-${t.id}" value="${count}" 
-//                            oninput="typeMp('${t.name}', this.value)" 
-//                            onfocus="this.select()" 
-//                            onblur="cleanMpInput(this, '${t.name}')">
-//                     <button onclick="changeMp('${t.name}', 1)">+</button>
-//                 </div>
-//             </div>
-//         `;
-//     }).join("");
-//     updateMpTotal();
-// }
-
 function renderManpowerList() {
-    document.getElementById("manpower-list").innerHTML = MANPOWER.map(t => {
+    const container = document.getElementById("manpower-list");
+    if(!container) return;
+    container.innerHTML = MANPOWER.map(t => {
         let count = todaysDraft.manpower[t.name] || 0;
-        
-        // THE PLACEHOLDER HACK: If count is 0, pass an empty string ""
         let displayVal = count === 0 ? "" : count; 
-
-        return `
-            <div class="mp-card">
-                <div class="mp-info"><h4>${t.name}</h4><small>${t.sub}</small></div>
-                <div class="stepper">
-                    <button onclick="changeMp('${t.name}', -1)">−</button>
-                    <input type="number" class="mp-type-input" id="mp-val-${t.id}" 
-                           value="${displayVal}" placeholder="0"
-                           oninput="typeMp('${t.name}', this.value)" 
-                           onblur="cleanMpInput(this, '${t.name}')">
-                    <button onclick="changeMp('${t.name}', 1)">+</button>
-                </div>
-            </div>
-        `;
+        return `<div class="mp-card"><div class="mp-info"><h4>${t.name}</h4><small>${t.sub}</small></div><div class="stepper"><button onclick="changeMp('${t.name}', -1)">−</button><input type="number" class="mp-type-input" id="mp-val-${t.id}" value="${displayVal}" placeholder="0" oninput="typeMp('${t.name}', this.value)" onblur="cleanMpInput(this, '${t.name}')"><button onclick="changeMp('${t.name}', 1)">+</button></div></div>`;
     }).join("");
     updateMpTotal();
 }
-
 function changeMp(n, delta) {
-    let current = todaysDraft.manpower[n] || 0;
-    let nxt = Math.max(0, current + delta);
+    let nxt = Math.max(0, (todaysDraft.manpower[n] || 0) + delta);
     todaysDraft.manpower[n] = nxt;
-    
-    // If the math results in 0, turn it back into an empty string
-    document.getElementById(`mp-val-${MANPOWER.find(m => m.name === n).id}`).value = nxt === 0 ? "" : nxt; 
+    let iDom = document.getElementById(`mp-val-${MANPOWER.find(m => m.name === n).id}`);
+    if(iDom) iDom.value = nxt === 0 ? "" : nxt; 
     updateMpTotal();
 }
-
-function typeMp(n, valStr) {
-    let clean = valStr === "" ? 0 : Math.max(0, parseInt(valStr) || 0);
-    todaysDraft.manpower[n] = clean;
-    updateMpTotal();
-}
-
-function cleanMpInput(inputDom, tradeName) {
-    if (inputDom.value === "" || parseInt(inputDom.value) <= 0) {
-        inputDom.value = ""; // Keep it empty so the placeholder '0' sits there
-        todaysDraft.manpower[tradeName] = 0;
-        updateMpTotal();
-    }
-}
-
-// Fired when clicking the + or - buttons
-function changeMp(n, delta) {
-    let current = todaysDraft.manpower[n] || 0;
-    let nxt = Math.max(0, current + delta);
-    todaysDraft.manpower[n] = nxt;
-    document.getElementById(`mp-val-${MANPOWER.find(m => m.name === n).id}`).value = nxt;
-    updateMpTotal();
-}
-
-// Fired instantly as the user types digits on their keyboard
-function typeMp(n, valStr) {
-    let clean = valStr === "" ? 0 : Math.max(0, parseInt(valStr) || 0);
-    todaysDraft.manpower[n] = clean;
-    updateMpTotal();
-}
-
-// Fired when user clicks away from the input box
-function cleanMpInput(inputDom, tradeName) {
-    if (inputDom.value === "" || parseInt(inputDom.value) < 0) {
-        inputDom.value = "0";
-        todaysDraft.manpower[tradeName] = 0;
-        updateMpTotal();
-    }
-}
-
+function typeMp(n, vStr) { todaysDraft.manpower[n] = vStr === "" ? 0 : Math.max(0, parseInt(vStr) || 0); updateMpTotal(); }
+function cleanMpInput(dom, n) { if (dom.value === "" || parseInt(dom.value) <= 0) { dom.value = ""; todaysDraft.manpower[n] = 0; updateMpTotal(); } }
 function updateMpTotal() {
     let tot = Object.values(todaysDraft.manpower).reduce((s, v) => s + v, 0);
-    document.getElementById("total-mp-count").innerText = tot;
-    document.getElementById("stat-mp").innerText = tot;
+    let tDom = document.getElementById("total-mp-count"); if(tDom) tDom.innerText = tot;
+    let sDom = document.getElementById("stat-mp");        if(sDom) sDom.innerText = tot;
 }
 
 
 // ============================================================================
-// 6. EQUIPMENT RENDERER (ASSET IDs STRIPPED)
+// 7. EQUIPMENT RENDERER
 // ============================================================================
 function renderEquipmentCranes() {
     const container = document.getElementById("cranes-list");
-    const zoneOptions = ZONES.map(z => `<option value="${z}">${z}</option>`).join("") + 
-        `<option value="Others" style="font-weight:bold; color:#1e3a8a;">Others (Outside Plant Area)</option>`;
+    if(!container) return;
+    const zoneOptions = ZONES.map(z => `<option value="${z}">${z}</option>`).join("") + `<option value="Others" style="font-weight:bold; color:#1e3a8a;">Others (Outside Plant Area)</option>`;
 
     container.innerHTML = CRANES.map(crane => {
         let data = todaysDraft.equipment[crane.id] || { state: "IDLE", zone: "", load: "" };
         let isEngaged = data.state === "ENGAGED";
-        return `
-            <div class="crane-card ${isEngaged ? 'engaged' : ''}" data-crane-id="${crane.id}">
-                <div class="crane-top"><h4 style="margin:2px 0;">${crane.name}</h4></div>
-                <div class="toggle-switch">
-                    <button class="${!isEngaged ? 'active' : ''}" onclick="setCraneState('${crane.id}', 'IDLE')">IDLE</button>
-                    <button class="${isEngaged ? 'active engaged-btn' : ''}" onclick="setCraneState('${crane.id}', 'ENGAGED')">ENGAGED</button>
-                </div>
-                <div class="crane-details-form">
-                    <div class="input-group">
-                        <label>Operational Area <span style="color:red;">*</span></label>
-                        <select onchange="saveCraneData('${crane.id}', 'zone', this.value)">
-                            <option value="">-- Select Work Zone --</option>
-                            ${zoneOptions}
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Current Load / Task <span style="color:red;">*</span></label>
-                        <input type="text" value="${data.load}" placeholder="Mandatory task description..." oninput="saveCraneData('${crane.id}', 'load', this.value)">
-                    </div>
-                </div>
-            </div>
-        `;
+        return `<div class="crane-card ${isEngaged ? 'engaged' : ''}" data-crane-id="${crane.id}"><div class="crane-top"><h4 style="margin:2px 0;">${crane.name}</h4></div><div class="toggle-switch"><button class="${!isEngaged ? 'active' : ''}" onclick="setCraneState('${crane.id}', 'IDLE')">IDLE</button><button class="${isEngaged ? 'active engaged-btn' : ''}" onclick="setCraneState('${crane.id}', 'ENGAGED')">ENGAGED</button></div><div class="crane-details-form"><div class="input-group"><label>Operational Area <span style="color:red;">*</span></label><select onchange="saveCraneData('${crane.id}', 'zone', this.value)"><option value="">-- Select Work Zone --</option>${zoneOptions}</select></div><div class="input-group"><label>Current Load / Task <span style="color:red;">*</span></label><input type="text" value="${data.load}" placeholder="Mandatory task description..." oninput="saveCraneData('${crane.id}', 'load', this.value)"></div></div></div>`;
     }).join("");
 
     CRANES.forEach(c => {
         let d = todaysDraft.equipment[c.id];
         if (d && d.state === "ENGAGED" && d.zone) {
-            document.querySelector(`.crane-card[data-crane-id="${c.id}"] select`).value = d.zone;
+            let sDom = document.querySelector(`.crane-card[data-crane-id="${c.id}"] select`);
+            if(sDom) sDom.value = d.zone;
         }
     });
-
     updateCraneCounter();
 }
-
-function setCraneState(craneId, state) { todaysDraft.equipment[craneId].state = state; renderEquipmentCranes(); }
-function saveCraneData(craneId, field, val) { todaysDraft.equipment[craneId][field] = val; }
+function setCraneState(id, st) { todaysDraft.equipment[id].state = st; renderEquipmentCranes(); }
+function saveCraneData(id, f, v) { todaysDraft.equipment[id][f] = v; }
 function updateCraneCounter() {
-    let active = Object.values(todaysDraft.equipment).filter(c => c.state === "ENGAGED").length;
-    document.getElementById("active-crane-count").innerText = String(active).padStart(2, '0');
-    document.getElementById("stat-eq").innerText = `${active} / 19`;
+    let act = Object.values(todaysDraft.equipment).filter(c => c.state === "ENGAGED").length;
+    let cDom = document.getElementById("active-crane-count"); if(cDom) cDom.innerText = String(act).padStart(2, '0');
+    let sDom = document.getElementById("stat-eq");            if(sDom) sDom.innerText = `${act} / 19`;
 }
 
 
 // ============================================================================
-// 7. MASTER SAVE TRANSMITTER
+// 8. CLOUD TRANSMITTER
 // ============================================================================
-document.getElementById("save-master-report").addEventListener("click", async () => {
-    const timeAtSave = getLiveShiftInfo();
-    todaysDraft.date = timeAtSave.dateStr; todaysDraft.shift = timeAtSave.shift;
+let mSaveBtn = document.getElementById("save-master-report");
+if (mSaveBtn) {
+    mSaveBtn.addEventListener("click", async () => {
+        const timeAtSave = getLiveShiftInfo();
+        todaysDraft.date = timeAtSave.dateStr; todaysDraft.shift = timeAtSave.shift;
 
-    let violatingCrane = null;
-    for (let c of CRANES) {
-        let draft = todaysDraft.equipment[c.id];
-        if (draft && draft.state === "ENGAGED") {
-            let noZone = (!draft.zone || draft.zone.trim() === "");
-            let noLoad = (!draft.load || draft.load.trim() === "");
-            if (noZone || noLoad) { violatingCrane = { name: c.name, id: c.id, noZone, noLoad }; break; }
+        let violatingCrane = null;
+        for (let c of CRANES) {
+            let draft = todaysDraft.equipment[c.id];
+            if (draft && draft.state === "ENGAGED") {
+                let noZ = (!draft.zone || draft.zone.trim() === "");
+                let noL = (!draft.load || draft.load.trim() === "");
+                if (noZ || noL) { violatingCrane = { name: c.name, id: c.id, noZ, noL }; break; }
+            }
         }
-    }
 
-    if (violatingCrane) {
-        let msg = violatingCrane.noZone ? "select an Operational Area" : "write a Task Description";
-        if (violatingCrane.noZone && violatingCrane.noLoad) msg = "select an Area AND write a Task";
+        if (violatingCrane) {
+            let msg = violatingCrane.noZ ? "select an Operational Area" : "write a Task Description";
+            if (violatingCrane.noZ && violatingCrane.noL) msg = "select an Area AND write a Task";
+            alert(`⚠️ SUBMISSION BLOCKED:\n\nCrane [${violatingCrane.name}] is ENGAGED, but you forgot to ${msg}.`);
+            navigateTo('view-equipment', 'Equipment Deployment', true);
+            setTimeout(() => {
+                let badCard = document.querySelector(`.crane-card[data-crane-id="${violatingCrane.id}"]`);
+                if (badCard) badCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 200);
+            return;
+        }
 
-        alert(`⚠️ SUBMISSION BLOCKED:\n\nCrane [${violatingCrane.name}] is toggled to ENGAGED, but you forgot to ${msg}.`);
-        navigateTo('view-equipment', 'Equipment Deployment', true);
-        setTimeout(() => {
-            let badCard = document.querySelector(`.crane-card[data-crane-id="${violatingCrane.id}"]`);
-            if (badCard) badCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 200);
-        return;
-    }
+        let allReports = JSON.parse(localStorage.getItem("mis_reports") || "{}");
+        allReports[timeAtSave.dateStr] = todaysDraft;
+        localStorage.setItem("mis_reports", JSON.stringify(allReports));
 
-    let allReports = JSON.parse(localStorage.getItem("mis_reports") || "{}");
-    allReports[timeAtSave.dateStr] = todaysDraft;
-    localStorage.setItem("mis_reports", JSON.stringify(allReports));
+        mSaveBtn.innerText = "⏳ TRANSMITTING..."; mSaveBtn.style.backgroundColor = "#b45309"; mSaveBtn.disabled = true;
 
-    const saveBtn = document.getElementById("save-master-report");
-    saveBtn.innerText = "⏳ TRANSMITTING..."; saveBtn.style.backgroundColor = "#b45309"; saveBtn.disabled = true;
-
-    try {
-        if(GOOGLE_SHEET_URL.includes("YOUR_ACTUAL")) throw new Error("Unlinked URL");
-        await fetch(GOOGLE_SHEET_URL, {
-            method: "POST", mode: "no-cors",
-            headers: { "Content-Type": "text/plain" }, body: JSON.stringify(todaysDraft)
-        });
-        alert(`✅ Master Report for ${timeAtSave.dateStr} (${timeAtSave.shift}) logged successfully!`);
-    } catch (err) { console.log("Offline mode: Saved safely to phone memory."); } 
-    finally {
-        saveBtn.innerText = "SAVE MASTER REPORT"; saveBtn.style.backgroundColor = ""; saveBtn.disabled = false;
-        renderSavedReportsHistory(); document.querySelector('.nav-tab[data-view="view-reports"]').click();
-    }
-});
+        try {
+            if(GOOGLE_SHEET_URL.includes("YOUR_ACTUAL")) throw new Error("Unlinked URL");
+            await fetch(GOOGLE_SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(todaysDraft) });
+            alert(`✅ Master Report for ${timeAtSave.dateStr} logged successfully!`);
+        } catch (err) { console.log("Offline cache active."); } 
+        finally {
+            mSaveBtn.innerText = "SAVE MASTER REPORT"; mSaveBtn.style.backgroundColor = ""; mSaveBtn.disabled = false;
+            renderSavedReportsHistory(); document.querySelector('.nav-tab[data-view="view-reports"]').click();
+        }
+    });
+}
 
 
 // ============================================================================
-// 8. HISTORIC FEED & NAVIGATION
+// 9. HISTORY FEED RENDERER
 // ============================================================================
 function renderSavedReportsHistory() {
     const feed = document.getElementById("reports-list-container");
+    if(!feed) return;
     let allReports = JSON.parse(localStorage.getItem("mis_reports") || "{}");
-    let dates = Object.keys(allReports).sort().reverse();
-    const live = getLiveShiftInfo();
+    let dates = Object.keys(allReports).sort().reverse(); const live = getLiveShiftInfo();
 
     if (dates.length === 0) { feed.innerHTML = `<p style="color:#94a3b8; text-align:center;">No synced reports yet.</p>`; return; }
 
@@ -417,21 +330,17 @@ function renderSavedReportsHistory() {
         let eqHtml = Object.entries(r.equipment).filter(([id, d]) => d.state === "ENGAGED").map(([id, d]) => `<li><span>${CRANES.find(c=>c.id===id)?.name || id}:</span> <strong>${d.zone}</strong> (${d.load})</li>`).join('') || `<div class="empty-log">All cranes idle</div>`;
         let mpHtml = Object.entries(r.manpower).filter(([t, c]) => c > 0).map(([t, c]) => `<li><span>${t}:</span> <strong>${c}</strong></li>`).join('') || `<div class="empty-log">0 workforce</div>`;
 
-        return `<div class="report-item-card" id="rep-${dStr}"><div class="report-card-summary"><div><small>MIS-${dStr.replace(/-/g, '').slice(2)}</small><h4>${dStr === live.dateStr ? 'Today' : dStr}</h4><span class="status-synced">✓ SYNCED</span></div><div class="summary-right"><small>MP: <strong>${tMp}</strong> | Eq: <strong>${aEq}</strong></small><button class="expand-view-btn" onclick="toggleRepView('${dStr}')">View 🔻</button></div></div><div class="report-detail-dropdown"><div class="rep-sect"><h5>🏗️ Erection</h5><ul>${erHtml}</ul></div><div class="rep-sect"><h5>🦾 Cranes</h5><ul>${eqHtml}</ul></div><div class="rep-sect"><h5>👥 Workforce</h5><ul>${mpHtml}</ul></div></div></div>`;
+        return `<div class="report-item-card" id="rep-${dStr}"><div class="report-card-summary"><div><small>MIS-${dStr.replace(/-/g, '').slice(2)}</small><h4>${dStr === live.dateStr ? 'Today' : dStr}</h4><span class="status-synced">✓ SYNCED</span></div><div class="summary-right"><small>MP: <strong>${tMp}</strong> | Eq: <strong>${aEq}</strong></small><button class="expand-view-btn" onclick="toggleRepView('${dStr}')">View </button></div></div><div class="report-detail-dropdown"><div class="rep-sect"><h5>️ Erection</h5><ul>${erHtml}</ul></div><div class="rep-sect"><h5>🦾 Cranes</h5><ul>${eqHtml}</ul></div><div class="rep-sect"><h5> Workforce</h5><ul>${mpHtml}</ul></div></div></div>`;
     }).join("");
 }
 
-function toggleRepView(d) { 
-    let c = document.getElementById(`rep-${d}`); c.classList.toggle('open'); 
-    c.querySelector('.expand-view-btn').innerText = c.classList.contains('open') ? 'Close 🔺' : 'View 🔻'; 
-}
+function toggleRepView(d) { let c = document.getElementById(`rep-${d}`); c.classList.toggle('open'); c.querySelector('.expand-view-btn').innerText = c.classList.contains('open') ? 'Close ' : 'View '; }
 
 function setupNavigationHandlers() {
     document.querySelectorAll(".nav-card").forEach(c => c.addEventListener("click", () => navigateTo(c.dataset.target, c.querySelector("h3").innerText, true)));
-    document.getElementById("back-btn").addEventListener("click", () => history.back());
+    let bDom = document.getElementById("back-btn"); if(bDom) bDom.addEventListener("click", () => history.back());
     const bTabs = document.querySelectorAll(".nav-tab");
     bTabs.forEach(tab => tab.addEventListener("click", () => {
         bTabs.forEach(t => t.classList.remove("active")); tab.classList.add("active");
-        navigateTo(tab.dataset.view, tab.dataset.view === "view-reports" ? "Saved Reports" : "Construction MIS", false);
-    }));
-}
+        navigateTo(tab.dataset.view, tab.dataset.view === "view-reports" ? "Saved Reports" : "
+
