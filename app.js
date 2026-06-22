@@ -45,17 +45,33 @@ let todaysDraft = {
 
 
 // ============================================================================
-// 3. SMART SPA ROUTER
+// 3. SECURE AUTHENTICATION & SPA ROUTER
 // ============================================================================
+
+const FIXED_UID = "Jswmis@5";
+const FIXED_PWD = "1234";
+
 window.addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; });
 
-function setupSmartBackGuard() {
-    history.replaceState({ view: 'view-dashboard' }, "", "#dashboard");
+function setupSmartRouter() {
+    history.replaceState({ view: 'view-login' }, "", "#login");
+
     window.addEventListener('popstate', (event) => {
+        let isAuth = localStorage.getItem("jsw_portal_auth") === "granted";
         let state = event.state;
-        if (state && state.view === 'view-dashboard') {
-            renderActiveScreen('view-dashboard', 'Construction MIS', false); return;
+
+        // If user hits back and isn't logged in, keep them trapped on Login
+        if (!isAuth) {
+            history.replaceState({ view: 'view-login' }, "", "#login");
+            renderActiveScreen('view-login', '', false);
+            return;
         }
+
+        if (state && state.view === 'view-dashboard') {
+            renderActiveScreen('view-dashboard', 'Construction MIS', false);
+            return;
+        }
+
         if (!state || state.view !== 'view-dashboard') {
             if (confirm("⚠️ Tapping 'Back' will close the MIS Dashboard. Do you want to stay?")) {
                 history.pushState({ view: 'view-dashboard' }, "", "#dashboard");
@@ -79,8 +95,9 @@ function navigateTo(targetId, title, isSubView) {
 
 
 // ============================================================================
-// 4. BOOTSTRAP APP ON LOAD
+// 4. BOOTSTRAP APP ON LOAD (WITH SESSION MEMORY)
 // ============================================================================
+
 document.addEventListener("DOMContentLoaded", () => {
     const live = getLiveShiftInfo();
     document.getElementById("display-date").innerText = live.dateStr;
@@ -88,27 +105,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftDom = document.getElementById("display-shift");
     if (shiftDom) shiftDom.innerText = live.shift;
 
-    // Dynamically inject the Dolvi Site code into the HTML
     const siteCodeDom = document.querySelector("#view-manpower .sub-header-info p");
     if (siteCodeDom) siteCodeDom.innerText = "Site Code: JSW-Dolvi-BF#3";
 
-    setupSmartBackGuard(); loadTodaysStateIfSaved();
+    setupSmartRouter();
+    loadTodaysStateIfSaved();
     renderErectionZones(); renderEquipmentCranes();
     renderManpowerList();  renderSavedReportsHistory();
     setupNavigationHandlers();
+
+    // --- CHECK SESSION MEMORY ON BOOT ---
+    if (localStorage.getItem("jsw_portal_auth") === "granted") {
+        unlockPortal();
+    } else {
+        setupLoginScreen();
+    }
 });
 
-function loadTodaysStateIfSaved() {
-    const live = getLiveShiftInfo();
-    let saved = JSON.parse(localStorage.getItem("mis_reports") || "{}");
-    
-    if (saved[live.dateStr]) todaysDraft = saved[live.dateStr]; 
-    else {
-        todaysDraft.date = live.dateStr; todaysDraft.shift = live.shift;
-        MANPOWER.forEach(m => todaysDraft.manpower[m.name] = 0);
-        CRANES.forEach(c => todaysDraft.equipment[c.id] = { state: "IDLE", zone: "", load: "" });
-    }
+
+function setupLoginScreen() {
+    const loginBtn = document.getElementById("btn-submit-login");
+    const errDom = document.getElementById("login-error-msg");
+
+    loginBtn.addEventListener("click", () => {
+        let enteredUid = document.getElementById("login-uid").value.trim();
+        let enteredPwd = document.getElementById("login-pwd").value.trim();
+
+        if (enteredUid === FIXED_UID && enteredPwd === FIXED_PWD) {
+            errDom.innerText = "";
+            localStorage.setItem("jsw_portal_auth", "granted"); // Save session
+            unlockPortal();
+        } else {
+            errDom.innerText = "❌ Authentication Rejected: Invalid ID or PIN";
+            document.getElementById("login-pwd").value = ""; // Clear PIN box
+            document.getElementById("login-pwd").focus();
+        }
+    });
 }
+
+
+function unlockPortal() {
+    // 1. Rip the invisibility cloak off the body
+    document.body.classList.remove("auth-locked");
+
+    // 2. Push user into the dashboard
+    history.pushState({ view: 'view-dashboard' }, "", "#dashboard");
+    renderActiveScreen('view-dashboard', 'Construction MIS', false);
+}
+
 
 
 // ============================================================================
