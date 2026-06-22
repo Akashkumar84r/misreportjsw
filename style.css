@@ -411,3 +411,61 @@ input, textarea, select {
 .mp-type-input::selection {
     background: transparent;
 }
+
+/* =========================================================
+   LOGIN SCREEN "INVISIBILITY CLOAK" & STYLING
+========================================================= */
+
+/* When locked, completely vanish the header and bottom nav bar */
+body.auth-locked .app-header,
+body.auth-locked .bottom-nav {
+    display: none !important;
+}
+
+/* Center the login box vertically in the middle of the glass */
+body.auth-locked .view-port {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 20px; /* Overrides the 90px bottom pad meant for the footer */
+    background-color: var(--bg-main);
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 360px;
+}
+
+.login-logo-badge {
+    width: 64px;
+    height: 64px;
+    background: var(--navy-dark);
+    color: var(--white);
+    font-weight: 800;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    margin: 0 auto 12px auto;
+    box-shadow: 0 8px 16px rgba(10, 25, 47, 0.2);
+    letter-spacing: -1px;
+}
+
+.error-msg {
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 12px;
+    min-height: 16px;
+}
+
+.login-footer-note {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 32px;
+    line-height: 1.4;
+}
+
