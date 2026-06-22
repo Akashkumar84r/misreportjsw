@@ -3,7 +3,7 @@
 // ============================================================================
 const FIXED_UID = "Jswmis@5";
 const FIXED_PWD = "1234";
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/YOUR_ACTUAL_SCRIPT_ID_HERE/exec";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyzydefb_jHkmoL6VTbE6WyOCkSSDJSNbeZXxL3Sy-zYzXfzwqClrZ0G6uUIOpKj4do/exec";
 
 const ZONES = ["BF-Shell", "Furnace Proper", "Middle Tower", "Cast House West", "Cast House East", "Main ECR", "DGCP", "Cyclone", "HS#01", "HS#02", "HS#03", "HS#04", "Stove Housing", "Chimney", "MCC Gallery", "Stock House", "Pump house"];
 
