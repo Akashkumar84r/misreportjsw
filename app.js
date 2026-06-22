@@ -1,5 +1,5 @@
 // ============================================================================
-// 1. SYSTEM CONFIGURATION & AUTHENTICATION CONSTANTS
+// 1. CONSTANTS & SYSTEM CONFIG
 // ============================================================================
 const FIXED_UID = "Jswmis@5";
 const FIXED_PWD = "1234";
@@ -47,13 +47,28 @@ let todaysDraft = {
 
 
 // ============================================================================
-// 3. SMART SPA ROUTER & VIEW CONTROLLER
+// 3. UI VIEW CONTROLLER & ROUTER
 // ============================================================================
 window.addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; });
 
+function renderActiveScreen(targetId, title, isSubView) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    
+    // Forgiving DOM check: works whether your HTML uses id="view-dashboard" OR id="dashboard"
+    let el = document.getElementById(targetId) || document.getElementById(targetId.replace('view-', ''));
+    if (el) el.classList.add("active");
+
+    let tDom = document.getElementById("header-title"); if(tDom) tDom.innerText = title;
+    let bDom = document.getElementById("back-btn");     if(bDom) bDom.classList.toggle("hidden", !isSubView);
+}
+
+function navigateTo(targetId, title, isSubView) {
+    history.pushState({ view: targetId }, "", `#${targetId.replace('view-', '')}`);
+    renderActiveScreen(targetId, title, isSubView);
+}
+
 function setupSmartRouter() {
     history.replaceState({ view: 'view-login' }, "", "#login");
-
     window.addEventListener('popstate', (event) => {
         let isAuth = localStorage.getItem("jsw_portal_auth") === "granted";
         let state = event.state;
@@ -62,11 +77,9 @@ function setupSmartRouter() {
             history.replaceState({ view: 'view-login' }, "", "#login");
             renderActiveScreen('view-login', '', false); return;
         }
-
         if (state && state.view === 'view-dashboard') {
             renderActiveScreen('view-dashboard', 'Construction MIS', false); return;
         }
-
         if (!state || state.view !== 'view-dashboard') {
             if (confirm("⚠️ Tapping 'Back' will close the MIS Dashboard. Do you want to stay?")) {
                 history.pushState({ view: 'view-dashboard' }, "", "#dashboard");
@@ -76,71 +89,9 @@ function setupSmartRouter() {
     });
 }
 
-function renderActiveScreen(targetId, title, isSubView) {
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    
-    // Forgiving DOM finder: Try exact ID first, if failed, try stripping "view-" 
-    let targetEl = document.getElementById(targetId) || document.getElementById(targetId.replace('view-', ''));
-    
-    if (targetEl) {
-        targetEl.classList.add("active");
-    } else {
-        console.error("CRITICAL ERROR: Could not find HTML tag with id=", targetId);
-    }
-
-    let titleDom = document.getElementById("header-title");
-    if (titleDom) titleDom.innerText = title;
-
-    let backBtn = document.getElementById("back-btn");
-    if (backBtn) backBtn.classList.toggle("hidden", !isSubView);
-}
-
-function navigateTo(targetId, title, isSubView) {
-    history.pushState({ view: targetId }, "", `#${targetId.replace('view-', '')}`);
-    renderActiveScreen(targetId, title, isSubView);
-}
-
 
 // ============================================================================
-// 4. BOOTSTRAP INITIALIZER
-// ============================================================================
-document.addEventListener("DOMContentLoaded", () => {
-    const live = getLiveShiftInfo();
-    let dDom = document.getElementById("display-date"); if(dDom) dDom.innerText = live.dateStr;
-    let bDom = document.getElementById("banner-date");  if(bDom) bDom.innerText = live.dateStr;
-    let sDom = document.getElementById("display-shift"); if(sDom) sDom.innerText = live.shift;
-
-    let codeDom = document.querySelector("#view-manpower .sub-header-info p");
-    if (codeDom) codeDom.innerText = "Site Code: JSW-Dolvi-BF#3";
-
-    setupSmartRouter();
-    loadTodaysStateIfSaved();
-    renderErectionZones(); renderEquipmentCranes();
-    renderManpowerList();  renderSavedReportsHistory();
-    setupNavigationHandlers();
-
-    // Session Gatekeeper
-    if (localStorage.getItem("jsw_portal_auth") === "granted") {
-        unlockPortal();
-    } else {
-        setupLoginScreen();
-    }
-});
-
-function loadTodaysStateIfSaved() {
-    const live = getLiveShiftInfo();
-    let saved = JSON.parse(localStorage.getItem("mis_reports") || "{}");
-    if (saved[live.dateStr]) todaysDraft = saved[live.dateStr]; 
-    else {
-        todaysDraft.date = live.dateStr; todaysDraft.shift = live.shift;
-        MANPOWER.forEach(m => todaysDraft.manpower[m.name] = 0);
-        CRANES.forEach(c => todaysDraft.equipment[c.id] = { state: "IDLE", zone: "", load: "" });
-    }
-}
-
-
-// ============================================================================
-// 5. LOGIN SCREEN CONTROLLER (WITH FAILSAFE OVERRIDES)
+// 4. AUTHENTICATION GATEKEEPER
 // ============================================================================
 function setupLoginScreen() {
     const loginBtn = document.getElementById("btn-submit-login");
@@ -148,10 +99,7 @@ function setupLoginScreen() {
     const uidInput = document.getElementById("login-uid");
     const pwdInput = document.getElementById("login-pwd");
 
-    if (!loginBtn || !uidInput || !pwdInput) {
-        console.error("LOGIN ABORTED: Check your HTML login input IDs!");
-        return;
-    }
+    if (!loginBtn) return;
 
     function executeAuth() {
         let enteredUid = uidInput.value.trim();
@@ -163,16 +111,13 @@ function setupLoginScreen() {
             unlockPortal();
         } else {
             if(errDom) errDom.innerText = "❌ Authentication Rejected: Invalid ID or PIN";
-            pwdInput.value = ""; 
-            pwdInput.focus();
+            pwdInput.value = ""; pwdInput.focus();
         }
     }
 
-    // Using .onclick guarantees we don't accidentally stack multiple event listeners
     loginBtn.onclick = executeAuth;
-
-    pwdInput.addEventListener("keydown", (e) => { if (e.key === "Enter") executeAuth(); });
-    uidInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); pwdInput.focus(); } });
+    pwdInput.onkeydown = (e) => { if (e.key === "Enter") executeAuth(); };
+    uidInput.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); pwdInput.focus(); } };
 }
 
 function unlockPortal() {
@@ -183,8 +128,19 @@ function unlockPortal() {
 
 
 // ============================================================================
-// 6. ERECTION & MANPOWER RENDERERS
+// 5. STATE LOADER & DATA RENDERERS
 // ============================================================================
+function loadTodaysStateIfSaved() {
+    const live = getLiveShiftInfo();
+    let saved = JSON.parse(localStorage.getItem("mis_reports") || "{}");
+    if (saved[live.dateStr]) todaysDraft = saved[live.dateStr]; 
+    else {
+        todaysDraft.date = live.dateStr; todaysDraft.shift = live.shift;
+        MANPOWER.forEach(m => todaysDraft.manpower[m.name] = 0);
+        CRANES.forEach(c => todaysDraft.equipment[c.id] = { state: "IDLE", zone: "", load: "" });
+    }
+}
+
 function renderErectionZones() {
     const container = document.getElementById("zones-accordion");
     if(!container) return;
@@ -213,8 +169,7 @@ function renderManpowerList() {
     updateMpTotal();
 }
 function changeMp(n, delta) {
-    let nxt = Math.max(0, (todaysDraft.manpower[n] || 0) + delta);
-    todaysDraft.manpower[n] = nxt;
+    let nxt = Math.max(0, (todaysDraft.manpower[n] || 0) + delta); todaysDraft.manpower[n] = nxt;
     let iDom = document.getElementById(`mp-val-${MANPOWER.find(m => m.name === n).id}`);
     if(iDom) iDom.value = nxt === 0 ? "" : nxt; 
     updateMpTotal();
@@ -227,15 +182,10 @@ function updateMpTotal() {
     let sDom = document.getElementById("stat-mp");        if(sDom) sDom.innerText = tot;
 }
 
-
-// ============================================================================
-// 7. EQUIPMENT RENDERER
-// ============================================================================
 function renderEquipmentCranes() {
     const container = document.getElementById("cranes-list");
     if(!container) return;
     const zoneOptions = ZONES.map(z => `<option value="${z}">${z}</option>`).join("") + `<option value="Others" style="font-weight:bold; color:#1e3a8a;">Others (Outside Plant Area)</option>`;
-
     container.innerHTML = CRANES.map(crane => {
         let data = todaysDraft.equipment[crane.id] || { state: "IDLE", zone: "", load: "" };
         let isEngaged = data.state === "ENGAGED";
@@ -245,8 +195,7 @@ function renderEquipmentCranes() {
     CRANES.forEach(c => {
         let d = todaysDraft.equipment[c.id];
         if (d && d.state === "ENGAGED" && d.zone) {
-            let sDom = document.querySelector(`.crane-card[data-crane-id="${c.id}"] select`);
-            if(sDom) sDom.value = d.zone;
+            let sDom = document.querySelector(`.crane-card[data-crane-id="${c.id}"] select`); if(sDom) sDom.value = d.zone;
         }
     });
     updateCraneCounter();
@@ -259,73 +208,16 @@ function updateCraneCounter() {
     let sDom = document.getElementById("stat-eq");            if(sDom) sDom.innerText = `${act} / 19`;
 }
 
-
-// ============================================================================
-// 8. CLOUD TRANSMITTER
-// ============================================================================
-let mSaveBtn = document.getElementById("save-master-report");
-if (mSaveBtn) {
-    mSaveBtn.addEventListener("click", async () => {
-        const timeAtSave = getLiveShiftInfo();
-        todaysDraft.date = timeAtSave.dateStr; todaysDraft.shift = timeAtSave.shift;
-
-        let violatingCrane = null;
-        for (let c of CRANES) {
-            let draft = todaysDraft.equipment[c.id];
-            if (draft && draft.state === "ENGAGED") {
-                let noZ = (!draft.zone || draft.zone.trim() === "");
-                let noL = (!draft.load || draft.load.trim() === "");
-                if (noZ || noL) { violatingCrane = { name: c.name, id: c.id, noZ, noL }; break; }
-            }
-        }
-
-        if (violatingCrane) {
-            let msg = violatingCrane.noZ ? "select an Operational Area" : "write a Task Description";
-            if (violatingCrane.noZ && violatingCrane.noL) msg = "select an Area AND write a Task";
-            alert(`⚠️ SUBMISSION BLOCKED:\n\nCrane [${violatingCrane.name}] is ENGAGED, but you forgot to ${msg}.`);
-            navigateTo('view-equipment', 'Equipment Deployment', true);
-            setTimeout(() => {
-                let badCard = document.querySelector(`.crane-card[data-crane-id="${violatingCrane.id}"]`);
-                if (badCard) badCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 200);
-            return;
-        }
-
-        let allReports = JSON.parse(localStorage.getItem("mis_reports") || "{}");
-        allReports[timeAtSave.dateStr] = todaysDraft;
-        localStorage.setItem("mis_reports", JSON.stringify(allReports));
-
-        mSaveBtn.innerText = "⏳ TRANSMITTING..."; mSaveBtn.style.backgroundColor = "#b45309"; mSaveBtn.disabled = true;
-
-        try {
-            if(GOOGLE_SHEET_URL.includes("YOUR_ACTUAL")) throw new Error("Unlinked URL");
-            await fetch(GOOGLE_SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(todaysDraft) });
-            alert(`✅ Master Report for ${timeAtSave.dateStr} logged successfully!`);
-        } catch (err) { console.log("Offline cache active."); } 
-        finally {
-            mSaveBtn.innerText = "SAVE MASTER REPORT"; mSaveBtn.style.backgroundColor = ""; mSaveBtn.disabled = false;
-            renderSavedReportsHistory(); document.querySelector('.nav-tab[data-view="view-reports"]').click();
-        }
-    });
-}
-
-
-// ============================================================================
-// 9. HISTORY FEED RENDERER
-// ============================================================================
 function renderSavedReportsHistory() {
-    const feed = document.getElementById("reports-list-container");
-    if(!feed) return;
+    const feed = document.getElementById("reports-list-container"); if(!feed) return;
     let allReports = JSON.parse(localStorage.getItem("mis_reports") || "{}");
     let dates = Object.keys(allReports).sort().reverse(); const live = getLiveShiftInfo();
 
     if (dates.length === 0) { feed.innerHTML = `<p style="color:#94a3b8; text-align:center;">No synced reports yet.</p>`; return; }
-
     feed.innerHTML = dates.map(dStr => {
         let r = allReports[dStr];
         let tMp = Object.values(r.manpower).reduce((a,b)=>a+b, 0);
         let aEq = Object.values(r.equipment).filter(e => e.state === "ENGAGED").length;
-
         let erHtml = Object.entries(r.erection).filter(([z, d]) => parseFloat(d.mt) > 0).map(([z, d]) => `<li><span>${z}:</span> <strong>${d.mt} MT</strong></li>`).join('') || `<div class="empty-log">No steel logged</div>`;
         let eqHtml = Object.entries(r.equipment).filter(([id, d]) => d.state === "ENGAGED").map(([id, d]) => `<li><span>${CRANES.find(c=>c.id===id)?.name || id}:</span> <strong>${d.zone}</strong> (${d.load})</li>`).join('') || `<div class="empty-log">All cranes idle</div>`;
         let mpHtml = Object.entries(r.manpower).filter(([t, c]) => c > 0).map(([t, c]) => `<li><span>${t}:</span> <strong>${c}</strong></li>`).join('') || `<div class="empty-log">0 workforce</div>`;
@@ -333,14 +225,85 @@ function renderSavedReportsHistory() {
         return `<div class="report-item-card" id="rep-${dStr}"><div class="report-card-summary"><div><small>MIS-${dStr.replace(/-/g, '').slice(2)}</small><h4>${dStr === live.dateStr ? 'Today' : dStr}</h4><span class="status-synced">✓ SYNCED</span></div><div class="summary-right"><small>MP: <strong>${tMp}</strong> | Eq: <strong>${aEq}</strong></small><button class="expand-view-btn" onclick="toggleRepView('${dStr}')">View </button></div></div><div class="report-detail-dropdown"><div class="rep-sect"><h5>️ Erection</h5><ul>${erHtml}</ul></div><div class="rep-sect"><h5>🦾 Cranes</h5><ul>${eqHtml}</ul></div><div class="rep-sect"><h5> Workforce</h5><ul>${mpHtml}</ul></div></div></div>`;
     }).join("");
 }
-
 function toggleRepView(d) { let c = document.getElementById(`rep-${d}`); c.classList.toggle('open'); c.querySelector('.expand-view-btn').innerText = c.classList.contains('open') ? 'Close ' : 'View '; }
 
 function setupNavigationHandlers() {
     document.querySelectorAll(".nav-card").forEach(c => c.addEventListener("click", () => navigateTo(c.dataset.target, c.querySelector("h3").innerText, true)));
-    let bDom = document.getElementById("back-btn"); if(bDom) bDom.addEventListener("click", () => history.back());
+    let bDom = document.getElementById("back-btn"); if(bDom) bDom.onclick = () => history.back();
     const bTabs = document.querySelectorAll(".nav-tab");
     bTabs.forEach(tab => tab.addEventListener("click", () => {
         bTabs.forEach(t => t.classList.remove("active")); tab.classList.add("active");
-        navigateTo(tab.dataset.view, tab.dataset.view === "view-reports" ? "Saved Reports" : "
+        navigateTo(tab.dataset.view, tab.dataset.view === "view-reports" ? "Saved Reports" : "Construction MIS", false);
+    }));
+
+    // Attach Master Save button safely
+    let mSaveBtn = document.getElementById("save-master-report");
+    if (mSaveBtn) {
+        mSaveBtn.onclick = async () => {
+            const timeAtSave = getLiveShiftInfo(); todaysDraft.date = timeAtSave.dateStr; todaysDraft.shift = timeAtSave.shift;
+            let violatingCrane = null;
+            for (let c of CRANES) {
+                let draft = todaysDraft.equipment[c.id];
+                if (draft && draft.state === "ENGAGED") {
+                    let noZ = (!draft.zone || draft.zone.trim() === ""); let noL = (!draft.load || draft.load.trim() === "");
+                    if (noZ || noL) { violatingCrane = { name: c.name, id: c.id, noZ, noL }; break; }
+                }
+            }
+            if (violatingCrane) {
+                let msg = violatingCrane.noZ ? "select an Operational Area" : "write a Task Description";
+                if (violatingCrane.noZ && violatingCrane.noL) msg = "select an Area AND write a Task";
+                alert(`⚠️ SUBMISSION BLOCKED:\n\nCrane [${violatingCrane.name}] is ENGAGED, but you forgot to ${msg}.`);
+                navigateTo('view-equipment', 'Equipment Deployment', true);
+                setTimeout(() => {
+                    let badCard = document.querySelector(`.crane-card[data-crane-id="${violatingCrane.id}"]`);
+                    if (badCard) badCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200); return;
+            }
+
+            let allReports = JSON.parse(localStorage.getItem("mis_reports") || "{}"); allReports[timeAtSave.dateStr] = todaysDraft; localStorage.setItem("mis_reports", JSON.stringify(allReports));
+            mSaveBtn.innerText = "⏳ TRANSMITTING..."; mSaveBtn.style.backgroundColor = "#b45309"; mSaveBtn.disabled = true;
+
+            try {
+                if(GOOGLE_SHEET_URL.includes("YOUR_ACTUAL")) throw new Error("Unlinked URL");
+                await fetch(GOOGLE_SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(todaysDraft) });
+                alert(`✅ Master Report logged successfully!`);
+            } catch (err) { console.log("Offline cache active."); } 
+            finally {
+                mSaveBtn.innerText = "SAVE MASTER REPORT"; mSaveBtn.style.backgroundColor = ""; mSaveBtn.disabled = false;
+                renderSavedReportsHistory(); document.querySelector('.nav-tab[data-view="view-reports"]').click();
+            }
+        };
+    }
+}
+
+
+// ============================================================================
+// 6. MASTER BOOTSTRAPPER (PLACED AT THE ABSOLUTE BOTTOM)
+// ============================================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const live = getLiveShiftInfo();
+    let dDom = document.getElementById("display-date");  if(dDom) dDom.innerText = live.dateStr;
+    let bDom = document.getElementById("banner-date");   if(bDom) bDom.innerText = live.dateStr;
+    let sDom = document.getElementById("display-shift"); if(sDom) sDom.innerText = live.shift;
+
+    let codeDom = document.querySelector("#view-manpower .sub-header-info p");
+    if (codeDom) codeDom.innerText = "Site Code: JSW-Dolvi-BF#3";
+
+    // Because we are at the bottom, 100% of these are guaranteed sitting inside browser RAM:
+    setupSmartRouter();
+    loadTodaysStateIfSaved();
+    renderErectionZones(); 
+    renderEquipmentCranes();
+    renderManpowerList();  
+    renderSavedReportsHistory();
+    setupNavigationHandlers();
+
+    // Check Session Gatekeeper
+    if (localStorage.getItem("jsw_portal_auth") === "granted") {
+        unlockPortal();
+    } else {
+        setupLoginScreen();
+    }
+});
+
 
