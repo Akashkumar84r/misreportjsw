@@ -1,179 +1,362 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Construction MIS Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="auth-locked">
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
+  <body class="auth-locked">
     <div class="app-container">
-        
-        <header class="app-header">
-            <button id="back-btn" class="icon-btn hidden">←</button>
-            <h1 id="header-title">Construction MIS</h1>
-            <div class="header-actions">⋮</div>
-        </header>
+      <header class="app-header">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <button id="back-btn" class="icon-btn hidden">←</button>
+          <h1 id="header-title">Construction MIS</h1>
+        </div>
 
-        <main class="view-port">
-            <section id="view-login" class="view active">
-    <div class="login-wrapper">
-        <div class="login-logo-badge">JSW</div>
-        <span class="sub-label" style="text-align: center; display: block;">BLAST FURNACE #3</span>
-        <h2 style="color: var(--navy-dark); text-align: center; margin: 4px 0 28px 0;">MIS SECURE PORTAL</h2>
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span
+            id="role-badge"
+            style="
+              background: rgba(255, 255, 255, 0.2);
+              font-size: 0.7rem;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-weight: bold;
+              letter-spacing: 1px;
+            "
+          ></span>
 
-        <div class="login-card">
+          <button
+            id="header-logout-btn"
+            class="icon-btn"
+            style="font-size: 1.4rem; cursor: pointer"
+            title="Logout"
+          >
+            🔐
+          </button>
+        </div>
+      </header>
+
+      <main class="view-port">
+        <div id="auth-loading-overlay" class="gateway-loader hidden">
+          <div class="gateway-spinner"></div>
+          <h4
+            style="
+              color: #0f172a;
+              margin-top: 22px;
+              font-weight: 800;
+              letter-spacing: 2px;
+              font-size: 0.8rem;
+            "
+          >
+            VERIFYING CREDENTIALS
+          </h4>
+          <p
+            style="
+              color: #64748b;
+              font-size: 0.72rem;
+              margin-top: 4px;
+              font-family: monospace;
+            "
+          >
+            HANDSHAKE: JSW-GATEWAY-SOUTH1
+          </p>
+        </div>
+        <section id="view-login" class="view active">
+          <div style="text-align: center; margin-bottom: 32px">
+            <img
+              src="image.png"
+              alt="JSW Logo"
+              style="max-width: 180px; height: auto"
+            />
+          </div>
+          <div class="project-context">
+            <span class="sub-label">JSW STEEL - DOLVI WORKS</span>
+            <h2>Blast Furnace #3</h2>
+            <p class="project-subtitle">Daily Construction MIS Portal</p>
+          </div>
+
+          <div class="login-card" autocomplete="off">
+            <h3 style="margin-bottom: 16px; color: #1e293b">
+              🔒 System Authorization
+            </h3>
+
             <div class="input-group">
-                <label>Authorized User ID</label>
-                <input type="text" id="login-uid" placeholder="Enter User ID" autocapitalize="none" autocomplete="off">
+              <label>User ID</label>
+              <input
+                type="text"
+                id="login-uid"
+                name="jsw_usr_field_99"
+                autocomplete="off"
+                readonly
+                onfocus="this.removeAttribute('readonly')"
+                placeholder="@JSWDolvi"
+                spellcheck="false"
+              />
             </div>
 
-            <div class="input-group" style="margin-top: 16px;">
-                <label>Security PIN</label>
-                <input type="password" id="login-pwd" inputmode="numeric" pattern="[0-9]*" placeholder="••••" maxlength="4">
+            <div class="input-group" style="margin-top: 12px">
+              <label>Access PIN</label>
+              <input
+                type="tel"
+                id="login-pwd"
+                name="jsw_pin_field_99"
+                autocomplete="off"
+                readonly
+                onfocus="this.removeAttribute('readonly')"
+                maxlength="6"
+                placeholder="••••••"
+                style="-webkit-text-security: disc; text-security: disc"
+              />
             </div>
 
-            <button id="btn-submit-login" class="master-save" style="margin-top: 24px;">AUTHENTICATE</button>
-            <p id="login-error-msg" class="error-msg"></p>
-        </div>
-        
-        <div class="login-footer-note">
-            🛡️ Enterprise MIS Data Collection Engine<br>
-            <small>Restricted Access Only</small>
-        </div>
-    </div>
-</section>
-            <section id="view-dashboard" class="view">
-                <div class="project-context">
-                    <span class="sub-label">PROJECT OVERVIEW</span>
-                    <h2>SITE STATUS DASHBOARD</h2>
-                    <div class="meta-row">
-                        <div>
-                            <small>CURRENT SHIFT</small>
-                            <p id="display-shift">Day Shift B</p>
-                        </div>
-                        <div>
-                            <small>DATE</small>
-                            <p id="display-date">24-MAY-2024</p>
-                        </div>
-                    </div>
-                </div>
+            <p
+              id="login-error-msg"
+              style="
+                color: #dc2626;
+                font-size: 0.8rem;
+                margin-top: 12px;
+                min-height: 18px;
+                font-weight: bold;
+              "
+            ></p>
 
-                <div class="nav-card" data-target="view-erection">
-                    <div class="card-icon">🏗️</div>
-                    <div class="bg-watermark">🏗️</div>
-                    <h3>Erection Status</h3>
-                    <p>Update vertical and horizontal structural alignment data.</p>
-                    <span class="card-link">LOG PROGRESS ↗</span>
-                </div>
-
-                <div class="nav-card" data-target="view-equipment">
-                    <div class="card-icon">🦾</div>
-                    <div class="bg-watermark">🦾</div>
-                    <h3>Equipment Details</h3>
-                    <p>Log crane hours, idle time, and maintenance requirements.</p>
-                    <span class="card-link">VIEW ASSETS ⚙️</span>
-                </div>
-
-                <div class="nav-card" data-target="view-manpower">
-                    <div class="card-icon">👥</div>
-                    <div class="bg-watermark">👥</div>
-                    <h3>Manpower Details</h3>
-                    <p>Input workforce count, specialized trades, and safety hours.</p>
-                    <span class="card-link">TRACK TEAMS 🔍</span>
-                </div>
-
-                <button id="save-master-report" class="btn-primary master-save">SAVE MASTER REPORT</button>
-            </section>
-
-
-            <section id="view-reports" class="view">
-                <div class="report-draft-banner">
-                    <div class="banner-header">
-                        <span class="warning-badge">⚠️ DRAFT PENDING</span>
-                    </div>
-                    <h3>Finalize Daily Site Report</h3>
-                    <p>The report for <strong id="banner-date">Today</strong> is open. Any new submissions will overwrite today's record.</p>
-                    
-                    <div class="live-stats-grid">
-                        <div>
-                            <small>MANPOWER LOGGED</small>
-                            <h4 id="stat-mp">0</h4>
-                        </div>
-                        <div>
-                            <small>CRANES ENGAGED</small>
-                            <h4 id="stat-eq">0 / 19</h4>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="reports-header-row">
-                    <h3>Recent Reports</h3>
-                    <small>FILTER BY DATE 🔻</small>
-                </div>
-
-                <div id="reports-list-container" class="reports-feed">
-                    </div>
-            </section>
-
-
-            <section id="view-erection" class="view sub-view">
-                <div class="sub-header-info">
-                    <h2>Erection Status</h2>
-                    <p>Select a work zone to update daily tonnage.</p>
-                </div>
-                <div id="zones-accordion" class="accordion-group">
-                    </div>
-            </section>
-
-
-            <section id="view-equipment" class="view sub-view">
-                <div class="sub-header-info">
-                    <h2>Equipment Deployment</h2>
-                    <p>Real-time crane utilization and task assignment.</p>
-                </div>
-                <div id="cranes-list" class="crane-group">
-                    </div>
-                <div class="sticky-equipment-footer">
-                    <div>
-                        <small>Daily Fleet Overview</small>
-                        <p>Active Assets</p>
-                    </div>
-                    <div class="asset-count"><span id="active-crane-count">01</span> / 19</div>
-                </div>
-            </section>
-
-
-            <section id="view-manpower" class="view sub-view">
-                <div class="sub-header-info">
-                    <span class="pill">FIELD REPORT</span>
-                    <h2>Daily Manpower Entry</h2>
-                    <p>Site Code: IND-HARYANA-092</p>
-                </div>
-                <div id="manpower-list" class="manpower-group">
-                    </div>
-                <div class="sticky-manpower-footer">
-                    <small>AGGREGATE STRENGTH</small>
-                    <h3>Total Manpower: <span id="total-mp-count">0</span></h3>
-                </div>
-            </section>
-
-        </main>
-
-        <footer class="bottom-nav">
-            <button class="nav-tab active" data-view="view-dashboard">
-                <span class="tab-icon">🎛️</span>
-                <span>Dashboard</span>
+            <button
+              type="button"
+              id="btn-submit-login"
+              class="master-save"
+              style="margin-top: 16px"
+            >
+              AUTHENTICATE
             </button>
-            <button class="nav-tab" data-view="view-reports">
-                <span class="tab-icon">📄</span>
-                <span>Reports</span>
-            </button>
-        </footer>
+          </div>
+        </section>
 
+        <section id="view-admin" class="view">
+          <button
+            class="master-save"
+            style="
+              background-color: #3b82f6;
+              margin-bottom: 24px;
+              padding: 12px;
+              font-size: 0.9rem;
+            "
+            onclick="
+              document
+                .querySelector('.nav-tab[data-view=\'view-dashboard\']')
+                .click()
+            "
+          >
+            ← BACK TO DASHBOARD
+          </button>
+          <div class="project-context">
+            <span class="sub-label">AUTHORIZED ACCESS ONLY</span>
+            <h2>ADMIN CONTROL PANEL</h2>
+          </div>
+
+          <div class="nav-card">
+            <h3 style="font-size: 1rem; margin-bottom: 12px">
+              🏗️ Manage Zones
+            </h3>
+            <div id="admin-zones-list" class="admin-list-container"></div>
+            <div class="admin-input-row">
+              <input
+                type="text"
+                id="new-zone-name"
+                placeholder="e.g. Conveyor Belt 4"
+              />
+              <button class="btn-add-item" onclick="addAdminItem('zones')">
+                ADD
+              </button>
+            </div>
+          </div>
+
+          <div class="nav-card">
+            <h3 style="font-size: 1rem; margin-bottom: 12px">
+              🦾 Manage Cranes
+            </h3>
+            <div id="admin-cranes-list" class="admin-list-container"></div>
+            <div class="admin-input-row">
+              <input
+                type="text"
+                id="new-crane-name"
+                placeholder="e.g. SANY 200T"
+              />
+              <button class="btn-add-item" onclick="addAdminItem('cranes')">
+                ADD
+              </button>
+            </div>
+          </div>
+
+          <div class="nav-card">
+            <h3 style="font-size: 1rem; margin-bottom: 12px">
+              👥 Manage Manpower
+            </h3>
+            <div id="admin-mp-list" class="admin-list-container"></div>
+            <div class="admin-input-row">
+              <input
+                type="text"
+                id="new-mp-name"
+                placeholder="e.g. Electricians"
+              />
+              <button class="btn-add-item" onclick="addAdminItem('manpower')">
+                ADD
+              </button>
+            </div>
+          </div>
+
+          <button
+            id="btn-save-master-data"
+            class="master-save"
+            style="background-color: #059669; margin-bottom: 16px"
+          >
+            SAVE DATABASE TO CLOUD
+          </button>
+          <button
+            class="master-save"
+            style="background-color: #dc2626; color: white"
+            onclick="logout()"
+          >
+            LOGOUT
+          </button>
+        </section>
+
+        <section id="view-dashboard" class="view">
+          <div class="project-context">
+            <span class="sub-label">PROJECT OVERVIEW</span>
+            <h2>SITE STATUS DASHBOARD</h2>
+            <div class="meta-row">
+              <div>
+                <small>CURRENT SHIFT</small>
+                <p id="display-shift">Day Shift B</p>
+              </div>
+              <div>
+                <small>DATE</small>
+                <p id="display-date">24-MAY-2024</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="nav-card" data-target="view-erection">
+            <div class="card-icon">🏗️</div>
+            <div class="bg-watermark">🏗️</div>
+            <h3>Erection Status</h3>
+            <p>Update vertical and horizontal structural alignment data.</p>
+            <span class="card-link">LOG PROGRESS ↗</span>
+          </div>
+
+          <div class="nav-card" data-target="view-equipment">
+            <div class="card-icon">🦾</div>
+            <div class="bg-watermark">🦾</div>
+            <h3>Equipment Details</h3>
+            <p>Log crane hours, idle time, and maintenance requirements.</p>
+            <span class="card-link">VIEW ASSETS ⚙️</span>
+          </div>
+
+          <div class="nav-card" data-target="view-manpower">
+            <div class="card-icon">👥</div>
+            <div class="bg-watermark">👥</div>
+            <h3>Manpower Details</h3>
+            <p>Input workforce count, specialized trades, and safety hours.</p>
+            <span class="card-link">TRACK TEAMS 🔍</span>
+          </div>
+
+          <button id="save-master-report" class="btn-primary master-save">
+            SAVE MASTER REPORT
+          </button>
+        </section>
+
+        <section id="view-reports" class="view">
+          <div class="report-draft-banner">
+            <div class="banner-header">
+              <span class="warning-badge">⚠️ DRAFT PENDING</span>
+            </div>
+            <h3>Finalize Daily Site Report</h3>
+            <p>
+              The report for <strong id="banner-date">Today</strong> is open.
+              Any new submissions will overwrite today's record.
+            </p>
+
+            <div class="live-stats-grid">
+              <div>
+                <small>MANPOWER LOGGED</small>
+                <h4 id="stat-mp">0</h4>
+              </div>
+              <div>
+                <small>CRANES ENGAGED</small>
+                <h4 id="stat-eq">0 / 19</h4>
+              </div>
+            </div>
+          </div>
+
+          <div class="reports-header-row">
+            <h3>Recent Reports</h3>
+            <small>FILTER BY DATE 🔻</small>
+          </div>
+
+          <div id="reports-list-container" class="reports-feed"></div>
+        </section>
+
+        <section id="view-erection" class="view sub-view">
+          <div class="sub-header-info">
+            <h2>Erection Status</h2>
+            <p>Select a work zone to update daily tonnage.</p>
+          </div>
+          <div id="zones-accordion" class="accordion-group"></div>
+        </section>
+
+        <section id="view-equipment" class="view sub-view">
+          <div class="sub-header-info">
+            <h2>Equipment Deployment</h2>
+            <p>Real-time crane utilization and task assignment.</p>
+          </div>
+          <div id="cranes-list" class="crane-group"></div>
+          <div class="sticky-equipment-footer">
+            <div>
+              <small>Daily Fleet Overview</small>
+              <p>Active Assets</p>
+            </div>
+            <div class="asset-count">
+              <span id="active-crane-count">01</span> /
+              <span id="total-crane-count">19</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-manpower" class="view sub-view">
+          <div class="sub-header-info">
+            <span class="pill">FIELD REPORT</span>
+            <h2>Daily Manpower Entry</h2>
+            <p>Site Code: IND-HARYANA-092</p>
+          </div>
+          <div id="manpower-list" class="manpower-group"></div>
+          <div class="sticky-manpower-footer">
+            <small>AGGREGATE STRENGTH</small>
+            <h3>Total Manpower: <span id="total-mp-count">0</span></h3>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav">
+        <div class="nav-tab active" data-view="view-dashboard">
+          <span id="nav-dash-icon">🏠</span> Dashboard
+        </div>
+        <div class="nav-tab" data-view="view-reports">
+          <span>📋</span> Reports
+        </div>
+        <div id="nav-tab-admin" class="nav-tab hidden" data-view="view-admin">
+          <span>⚙️</span> Admin
+        </div>
+      </nav>
     </div>
 
-    <script src="app.js"></script>
-</body>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+    <script src="app.js?v=firebase_133"></script>
+  </body>
 </html>
