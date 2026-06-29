@@ -213,7 +213,10 @@ function getLiveShiftInfo() {
     shiftName = "Shift C (22:00 - 06:00)";
     if (hrs < 6) prodDate.setDate(prodDate.getDate() - 1);
   }
-  return { shift: shiftName, dateStr: prodDate.toISOString().split("T")[0] };
+  const y = prodDate.getFullYear();
+  const m = String(prodDate.getMonth() + 1).padStart(2, '0');
+  const d = String(prodDate.getDate()).padStart(2, '0');
+  return { shift: shiftName, dateStr: `${y}-${m}-${d}` };
 }
 
 function loadTodaysStateIfSaved() {
@@ -952,6 +955,26 @@ function setupNavigationHandlers() {
       const timeAtSave = getLiveShiftInfo();
       todaysDraft.date = timeAtSave.dateStr;
       todaysDraft.shift = timeAtSave.shift;
+
+      // CLEANUP: Remove any drafts for items that were deleted from GLOBAL_MASTER
+      const activeZoneNames = GLOBAL_MASTER.zones;
+      if (todaysDraft.erection) {
+        Object.keys(todaysDraft.erection).forEach(z => {
+          if (!activeZoneNames.includes(z)) delete todaysDraft.erection[z];
+        });
+      }
+      const activeCraneIds = GLOBAL_MASTER.cranes.map(c => c.id);
+      if (todaysDraft.equipment) {
+        Object.keys(todaysDraft.equipment).forEach(id => {
+          if (!activeCraneIds.includes(id)) delete todaysDraft.equipment[id];
+        });
+      }
+      const activeMpNames = GLOBAL_MASTER.manpower.map(m => m.name);
+      if (todaysDraft.manpower) {
+        Object.keys(todaysDraft.manpower).forEach(n => {
+          if (!activeMpNames.includes(n)) delete todaysDraft.manpower[n];
+        });
+      }
 
       let violatingCrane = null;
       for (let c of GLOBAL_MASTER.cranes) {
