@@ -214,8 +214,8 @@ function getLiveShiftInfo() {
     if (hrs < 6) prodDate.setDate(prodDate.getDate() - 1);
   }
   const y = prodDate.getFullYear();
-  const m = String(prodDate.getMonth() + 1).padStart(2, '0');
-  const d = String(prodDate.getDate()).padStart(2, '0');
+  const m = String(prodDate.getMonth() + 1).padStart(2, "0");
+  const d = String(prodDate.getDate()).padStart(2, "0");
   return { shift: shiftName, dateStr: `${y}-${m}-${d}` };
 }
 
@@ -230,11 +230,17 @@ function loadTodaysStateIfSaved() {
 
   if (saved[live.dateStr]) todaysDraft = saved[live.dateStr];
   else {
+    let prevEquipment = {};
+    let pastDates = Object.keys(saved).filter(d => d < live.dateStr).sort().reverse();
+    if (pastDates.length > 0) {
+      prevEquipment = saved[pastDates[0]].equipment || {};
+    }
+
     todaysDraft = {
       date: live.dateStr,
       shift: live.shift,
       erection: {},
-      equipment: {},
+      equipment: JSON.parse(JSON.stringify(prevEquipment)),
       manpower: {},
     };
   }
@@ -569,18 +575,45 @@ async function renderSavedReportsHistory() {
   const live = getLiveShiftInfo();
   let allReports = {};
 
+  // 30 days cutoff
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 30);
+  cutoffDate.setHours(0, 0, 0, 0);
+
   if (role === "eng" || role === "admin") {
     try {
       const querySnap = await db.collection("reports_live").get();
       querySnap.forEach((doc) => {
-        allReports[doc.id] = doc.data();
+        let repDate = new Date(doc.id);
+        if (repDate < cutoffDate) {
+          // Auto-delete reports older than 30 days
+          db.collection("reports_live").doc(doc.id).delete().catch(console.error);
+        } else {
+          allReports[doc.id] = doc.data();
+        }
       });
       localStorage.setItem("mis_reports_eng", JSON.stringify(allReports));
     } catch (e) {
       allReports = JSON.parse(localStorage.getItem("mis_reports_eng") || "{}");
+      let changed = false;
+      Object.keys(allReports).forEach(dateStr => {
+        if (new Date(dateStr) < cutoffDate) {
+          delete allReports[dateStr];
+          changed = true;
+        }
+      });
+      if (changed) localStorage.setItem("mis_reports_eng", JSON.stringify(allReports));
     }
   } else {
     allReports = JSON.parse(localStorage.getItem("mis_reports_guest") || "{}");
+    let changed = false;
+    Object.keys(allReports).forEach(dateStr => {
+      if (new Date(dateStr) < cutoffDate) {
+        delete allReports[dateStr];
+        changed = true;
+      }
+    });
+    if (changed) localStorage.setItem("mis_reports_guest", JSON.stringify(allReports));
   }
 
   let dates = Object.keys(allReports).sort().reverse();
@@ -604,8 +637,10 @@ async function renderSavedReportsHistory() {
         Object.entries(r.erection || {})
           .filter(([z, d]) => parseFloat(d.mt) > 0)
           .map(
-            ([z, d]) =>
-              `<li><span>${z}:</span> <strong>${d.mt} MT</strong></li>`,
+            ([z, d]) => {
+              let remarksHtml = d.remarks ? ` <span style="color:#64748b; font-size:0.85em;">(${d.remarks})</span>` : '';
+              return `<li><span>${z}:</span> <strong>${d.mt} MT</strong>${remarksHtml}</li>`;
+            }
           )
           .join("") || `<div class="empty-log">No steel logged</div>`;
       let eqHtml =
@@ -959,19 +994,19 @@ function setupNavigationHandlers() {
       // CLEANUP: Remove any drafts for items that were deleted from GLOBAL_MASTER
       const activeZoneNames = GLOBAL_MASTER.zones;
       if (todaysDraft.erection) {
-        Object.keys(todaysDraft.erection).forEach(z => {
+        Object.keys(todaysDraft.erection).forEach((z) => {
           if (!activeZoneNames.includes(z)) delete todaysDraft.erection[z];
         });
       }
-      const activeCraneIds = GLOBAL_MASTER.cranes.map(c => c.id);
+      const activeCraneIds = GLOBAL_MASTER.cranes.map((c) => c.id);
       if (todaysDraft.equipment) {
-        Object.keys(todaysDraft.equipment).forEach(id => {
+        Object.keys(todaysDraft.equipment).forEach((id) => {
           if (!activeCraneIds.includes(id)) delete todaysDraft.equipment[id];
         });
       }
-      const activeMpNames = GLOBAL_MASTER.manpower.map(m => m.name);
+      const activeMpNames = GLOBAL_MASTER.manpower.map((m) => m.name);
       if (todaysDraft.manpower) {
-        Object.keys(todaysDraft.manpower).forEach(n => {
+        Object.keys(todaysDraft.manpower).forEach((n) => {
           if (!activeMpNames.includes(n)) delete todaysDraft.manpower[n];
         });
       }
